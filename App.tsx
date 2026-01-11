@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import ProfileView from './components/ProfileView';
 import SettingsView from './components/SettingsView';
+import AboutView from './components/AboutView';
 import { Script, Executor } from './types';
 import { Layers, Loader2, TrendingUp, Flame } from 'lucide-react';
 import { supabase } from './lib/supabase';
@@ -21,7 +22,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings'>('scripts');
+  const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub'>('scripts');
 
   // Modal & Selection States
   const [isPublishOpen, setIsPublishOpen] = useState(false);
@@ -105,6 +106,7 @@ const App: React.FC = () => {
           rawLink: s.raw_link,
           shortenerLink: s.shortener_link,
           verified: s.verified,
+          isOfficial: s.is_official,
           keySystem: s.key_system || false,
           createdAt: new Date(s.created_at).getTime(),
           tasks: s.tasks || []
@@ -145,7 +147,12 @@ const App: React.FC = () => {
       script.title.toLowerCase().includes(q) ||
       script.gameName.toLowerCase().includes(q) ||
       script.author.toLowerCase().includes(q)
-    );
+    ).sort((a, b) => {
+      // Sort by Official first
+      if (a.isOfficial && !b.isOfficial) return -1;
+      if (!a.isOfficial && b.isOfficial) return 1;
+      return 0; // Maintain existing logic (implied create_at since scripts are already sorted by fetch)
+    });
   }, [scripts, searchQuery]);
 
   // Trending Scripts (Top 4 by views)
@@ -340,6 +347,47 @@ const App: React.FC = () => {
           <SettingsView user={user} />
         )}
 
+        {/* VIEW: ABOUT */}
+        {currentView === 'about' && (
+          <AboutView onBack={handleBackToHub} />
+        )}
+
+        {/* VIEW: SLENDERHUB (Official Scripts Only) */}
+        {currentView === 'slenderhub' && (
+          <div className="container mx-auto px-4 py-8">
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <Flame className="text-indigo-400" size={32} />
+                <h1 className="text-3xl font-bold text-white">SlenderHub Official</h1>
+              </div>
+              <p className="text-slate-400">Verified and official scripts from the SlenderHub team</p>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="animate-spin text-indigo-500" size={40} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {scripts.filter(s => s.isOfficial).length === 0 ? (
+                  <div className="col-span-full text-center py-20">
+                    <Layers className="mx-auto text-slate-700 mb-4" size={64} />
+                    <p className="text-slate-500">No official scripts yet</p>
+                  </div>
+                ) : (
+                  scripts.filter(s => s.isOfficial).map(script => (
+                    <ScriptCard
+                      key={script.id}
+                      script={script}
+                      onClick={() => handleScriptClick(script)}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
 
       {/* Footer */}
@@ -355,6 +403,7 @@ const App: React.FC = () => {
         isOpen={isPublishOpen}
         onClose={() => setIsPublishOpen(false)}
         onPublish={handlePublish}
+        isAdmin={isAdmin}
       />
 
       <GatewayModal

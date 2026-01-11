@@ -7,9 +7,10 @@ interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPublish: (script: Script) => void;
+  isAdmin?: boolean;
 }
 
-const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish }) => {
+const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish, isAdmin = false }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState('Guest');
 
@@ -20,7 +21,8 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
     description: '',
     rawLink: '',
     shortenerLink: '',
-    keySystem: false // New field
+    keySystem: false,
+    isOfficial: false
   });
 
   // Image Upload State
@@ -37,15 +39,15 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
     if (isOpen) {
       supabase.auth.getUser().then(({ data }) => {
         if (data.user?.email) {
-          setCurrentUserEmail(data.user.email.split('@')[0]); 
+          setCurrentUserEmail(data.user.email.split('@')[0]);
         }
       });
     } else {
-        // Reset fields when closed
-        setFormData({ title: '', gameName: '', description: '', rawLink: '', shortenerLink: '', keySystem: false });
-        setImageFile(null);
-        setImagePreview(null);
-        setTasks([]);
+      // Reset fields when closed
+      setFormData({ title: '', gameName: '', description: '', rawLink: '', shortenerLink: '', keySystem: false });
+      setImageFile(null);
+      setImagePreview(null);
+      setTasks([]);
     }
   }, [isOpen]);
 
@@ -88,21 +90,21 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation: Require Image
     if (!imageFile) {
-        alert("Please select a thumbnail image.");
-        return;
+      alert("Please select a thumbnail image.");
+      return;
     }
 
     // Validation: Require either Raw Link OR Shortener Link
     if (!formData.rawLink && !formData.shortenerLink) {
-        alert("You must provide either a 'Raw Script URL' (for direct code) OR a 'Monetization Link' (for external download).");
-        return;
+      alert("You must provide either a 'Raw Script URL' (for direct code) OR a 'Monetization Link' (for external download).");
+      return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // 1. Upload Image to Supabase Storage
       const fileExt = imageFile.name.split('.').pop();
@@ -130,7 +132,8 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
           author: currentUserEmail,
           raw_link: formData.rawLink || null, // Allow null if empty
           shortener_link: formData.shortenerLink || null,
-          verified: false,
+          verified: isAdmin ? true : false, // Auto verify if admin
+          is_official: isAdmin && formData.isOfficial ? true : false,
           key_system: formData.keySystem // Save boolean
         }])
         .select()
@@ -146,7 +149,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
           url: t.url,
           text: t.text
         }));
-        
+
         const { error: tasksError } = await supabase
           .from('tasks')
           .insert(tasksPayload);
@@ -156,26 +159,27 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
 
       // 4. Update UI
       if (scriptData) {
-         const newScript: Script = {
-           id: scriptData.id,
-           title: scriptData.title,
-           gameName: scriptData.game_name,
-           description: scriptData.description,
-           imageUrl: scriptData.image_url,
-           author: scriptData.author,
-           views: scriptData.views || 0,
-           rawLink: scriptData.raw_link,
-           shortenerLink: scriptData.shortener_link,
-           tasks: tasks,
-           createdAt: Date.now(),
-           verified: false,
-           keySystem: formData.keySystem
-         };
-         onPublish(newScript);
+        const newScript: Script = {
+          id: scriptData.id,
+          title: scriptData.title,
+          gameName: scriptData.game_name,
+          description: scriptData.description,
+          imageUrl: scriptData.image_url,
+          author: scriptData.author,
+          views: scriptData.views || 0,
+          rawLink: scriptData.raw_link,
+          shortenerLink: scriptData.shortener_link,
+          tasks: tasks,
+          createdAt: Date.now(),
+          verified: isAdmin,
+          isOfficial: isAdmin && formData.isOfficial,
+          keySystem: formData.keySystem
+        };
+        onPublish(newScript);
       }
 
       onClose();
-      
+
     } catch (error: any) {
       console.error('Error publishing:', error);
       alert(`Failed to publish: ${error.message}`);
@@ -190,7 +194,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
 
   const getTaskIcon = (type: TaskType) => {
     switch (type) {
-      case 'youtube_subscribe': 
+      case 'youtube_subscribe':
       case 'youtube_like': return <Youtube size={18} />;
       case 'discord_join': return <MessageCircle size={18} />;
       case 'visit_url': return <Globe size={18} />;
@@ -208,13 +212,13 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
+      <div
         className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
         onClick={onClose}
       ></div>
 
       <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -229,14 +233,14 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
         {/* Content */}
         <div className="overflow-y-auto p-6 flex-1 custom-scrollbar">
           <form id="publish-form" onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
-            
+
             {/* Left Column: Basic Info */}
             <div className="flex-1 space-y-5">
               <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">1</span>
                 Script Details
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Title</label>
@@ -250,32 +254,31 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
                   <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Description</label>
                   <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 focus:outline-none h-24 resize-none" placeholder="What does this script do?" />
                 </div>
-                
+
                 {/* Image File Upload */}
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Thumbnail Image</label>
                   <div className="relative group">
-                    <input 
-                      type="file" 
+                    <input
+                      type="file"
                       accept="image/*"
                       onChange={handleFileChange}
-                      className="hidden" 
+                      className="hidden"
                       id="script-image-upload"
                     />
-                    <label 
-                      htmlFor="script-image-upload" 
-                      className={`w-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all ${
-                        imagePreview 
-                          ? 'border-indigo-500 bg-indigo-500/10' 
+                    <label
+                      htmlFor="script-image-upload"
+                      className={`w-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all ${imagePreview
+                          ? 'border-indigo-500 bg-indigo-500/10'
                           : 'border-slate-700 bg-slate-950 hover:border-indigo-500 hover:bg-slate-900'
-                      }`}
+                        }`}
                     >
                       {imagePreview ? (
                         <div className="relative w-full h-32">
-                           <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                           <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                              <span className="text-white text-xs font-bold">Change Image</span>
-                           </div>
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                            <span className="text-white text-xs font-bold">Change Image</span>
+                          </div>
                         </div>
                       ) : (
                         <>
@@ -287,35 +290,51 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
                   </div>
                 </div>
 
-                <div>
-                   <label className="flex items-center gap-3 p-3 bg-slate-950 border border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors">
-                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.keySystem ? 'bg-indigo-600 border-indigo-600' : 'border-slate-500'}`}>
-                        {formData.keySystem && <Key size={12} className="text-white" />}
-                     </div>
-                     <input 
-                       type="checkbox" 
-                       className="hidden"
-                       checked={formData.keySystem}
-                       onChange={(e) => setFormData({...formData, keySystem: e.target.checked})}
-                     />
-                     <div>
-                       <span className="block text-sm font-medium text-white">Requires Key System?</span>
-                       <span className="block text-xs text-slate-400">Check this if the script asks for a key when executed.</span>
-                     </div>
-                   </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-3 p-3 bg-slate-950 border border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors flex-1">
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.keySystem ? 'bg-indigo-600 border-indigo-600' : 'border-slate-500'}`}>
+                      {formData.keySystem && <Key size={12} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={formData.keySystem}
+                      onChange={(e) => setFormData({ ...formData, keySystem: e.target.checked })}
+                    />
+                    <div>
+                      <span className="block text-sm font-medium text-white">Requires Key System?</span>
+                    </div>
+                  </label>
+
+                  {isAdmin && (
+                    <label className="flex items-center gap-3 p-3 bg-indigo-900/20 border border-indigo-500/30 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors flex-1">
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.isOfficial ? 'bg-indigo-500 border-indigo-500' : 'border-indigo-500/50'}`}>
+                        {formData.isOfficial && <Key size={12} className="text-white" />}
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={formData.isOfficial}
+                        onChange={(e) => setFormData({ ...formData, isOfficial: e.target.checked })}
+                      />
+                      <div>
+                        <span className="block text-sm font-bold text-indigo-400">Official SlenderHub Script?</span>
+                      </div>
+                    </label>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Raw Script URL (Source)</label>
                   <div className="relative">
                     <LinkIcon className="absolute left-3 top-3.5 text-slate-500" size={16} />
-                    <input 
-                       type="url" 
-                       name="rawLink" 
-                       value={formData.rawLink} 
-                       onChange={handleChange} 
-                       className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-indigo-300 font-mono text-sm focus:border-indigo-500 focus:outline-none" 
-                       placeholder="Optional if Monetization Link is provided..." 
+                    <input
+                      type="url"
+                      name="rawLink"
+                      value={formData.rawLink}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-indigo-300 font-mono text-sm focus:border-indigo-500 focus:outline-none"
+                      placeholder="Optional if Monetization Link is provided..."
                     />
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">Leave empty if you only want to provide the Monetization Link below.</p>
@@ -333,7 +352,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
               {/* Action Builder */}
               <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
                 <div className="text-sm text-slate-300 font-medium mb-2">Add a required step:</div>
-                
+
                 {/* Action Buttons Grid */}
                 <div className="grid grid-cols-2 gap-3">
                   <button type="button" onClick={() => setActiveTaskType('youtube_subscribe')} className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-500/50 hover:bg-red-500/10 transition-all text-slate-300 hover:text-red-400 text-sm font-medium">
@@ -357,15 +376,15 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
                       Target URL for {activeTaskType.replace('_', ' ')}
                     </label>
                     <div className="flex gap-2">
-                      <input 
+                      <input
                         autoFocus
-                        type="url" 
+                        type="url"
                         value={tempTaskUrl}
                         onChange={(e) => setTempTaskUrl(e.target.value)}
                         className="flex-1 bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                         placeholder="https://..."
                       />
-                      <button 
+                      <button
                         type="button"
                         onClick={handleAddTask}
                         className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-sm font-bold"
@@ -404,16 +423,16 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
                 )}
 
                 {/* Optional Monetization at the end */}
-                 <div className="pt-4 border-t border-slate-800/50 mt-4">
+                <div className="pt-4 border-t border-slate-800/50 mt-4">
                   <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase flex items-center gap-2">
                     <LinkIcon size={12} /> Monetization / Download Link
                   </label>
-                  <input 
-                    name="shortenerLink" 
-                    value={formData.shortenerLink} 
-                    onChange={handleChange} 
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:border-indigo-500 focus:outline-none" 
-                    placeholder="e.g., Linkvertise, LootLabs, or direct MediaFire..." 
+                  <input
+                    name="shortenerLink"
+                    value={formData.shortenerLink}
+                    onChange={handleChange}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                    placeholder="e.g., Linkvertise, LootLabs, or direct MediaFire..."
                   />
                   <p className="text-[10px] text-slate-500 mt-1">If filled, users will be directed here after tasks. If empty, the Raw Code is shown.</p>
                 </div>
@@ -438,7 +457,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish 
             form="publish-form"
             className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Create Link'} 
+            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Create Link'}
             {!isSubmitting && <ArrowRight size={18} />}
           </button>
         </div>

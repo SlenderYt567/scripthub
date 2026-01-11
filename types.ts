@@ -23,6 +23,7 @@ export interface Script {
   shortenerLink?: string; // e.g., Linkvertise (optional final step)
   createdAt: number;
   verified?: boolean; // Admin verification status
+  isOfficial?: boolean; // SlenderHub Official Script
   keySystem: boolean; // New field: Does it require a key?
 }
 

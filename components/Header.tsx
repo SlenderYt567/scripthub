@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Plus, Terminal, Code2, Cpu, LogIn, LayoutDashboard, User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { Search, Plus, Terminal, Code2, Cpu, LogIn, LayoutDashboard, User, LogOut, Settings, ChevronDown, Flame, FileCode } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface HeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onOpenPublish: () => void;
-  currentView: 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings';
+  currentView: 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub';
   setCurrentView: (view: any) => void; // Using any to simplify TS for custom views
   isAdmin: boolean;
   user: any; // Supabase user object
@@ -50,33 +50,63 @@ const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setCurrentView('scripts')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${['scripts', 'details', 'profile'].includes(currentView)
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}
           >
             <Code2 size={16} />
             Scripts
           </button>
           <button
+            onClick={() => setCurrentView('slenderhub')}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${currentView === 'slenderhub'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+          >
+            <Flame size={16} />
+            SlenderHub
+          </button>
+          <button
             onClick={() => setCurrentView('executors')}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${currentView === 'executors'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}
           >
             <Cpu size={16} />
             Executors
           </button>
+          <button
+            onClick={() => setCurrentView('about')}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${currentView === 'about'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+          >
+            <User size={16} />
+            About
+          </button>
           {isAdmin && (
             <button
               onClick={() => setCurrentView('admin')}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${currentView === 'admin'
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-500/20'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                ? 'bg-red-600 text-white shadow-lg shadow-red-500/20'
+                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
             >
               <LayoutDashboard size={16} />
               Panel
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              // Specific launch button for admins (direct publish modal)
+              onClick={onOpenPublish}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/20"
+            >
+              <Plus size={16} />
+              Launch Script
             </button>
           )}
         </div>
@@ -177,11 +207,25 @@ const Header: React.FC<HeaderProps> = ({
           Scripts
         </button>
         <button
+          onClick={() => setCurrentView('slenderhub')}
+          className={`flex-1 py-2 text-xs font-medium text-center ${currentView === 'slenderhub' ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-500'
+            }`}
+        >
+          SlenderHub
+        </button>
+        <button
           onClick={() => setCurrentView('executors')}
           className={`flex-1 py-2 text-xs font-medium text-center ${currentView === 'executors' ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-500'
             }`}
         >
           Executors
+        </button>
+        <button
+          onClick={() => setCurrentView('about')}
+          className={`flex-1 py-2 text-xs font-medium text-center ${currentView === 'about' ? 'text-indigo-400 bg-indigo-500/5' : 'text-slate-500'
+            }`}
+        >
+          About
         </button>
         {isAdmin && (
           <button
