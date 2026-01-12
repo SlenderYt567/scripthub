@@ -37,7 +37,13 @@ const Header: React.FC<HeaderProps> = ({
         {/* Logo */}
         <div
           className="flex items-center gap-2 text-indigo-500 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => setCurrentView('scripts')}
+          onClick={() => {
+            setCurrentView('scripts');
+            const url = new URL(window.location.href);
+            url.searchParams.delete('view');
+            url.searchParams.delete('id');
+            window.history.pushState({}, '', url.toString());
+          }}
         >
           <Terminal size={28} strokeWidth={2.5} />
           <span className="text-xl font-bold tracking-tight text-white hidden sm:block">

@@ -24,16 +24,76 @@ const App: React.FC = () => {
   // Navigation State
   const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub'>('scripts');
 
+  // Auth State
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Sync state to URL - defined before useEffect to avoid TDZ if used there, though currently just called from events
+  const updateURL = (view: string, id?: string) => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('view');
+      url.searchParams.delete('id');
+
+      if (id) {
+        url.searchParams.set('id', id);
+      } else if (view !== 'scripts') {
+        url.searchParams.set('view', view);
+      }
+
+      window.history.pushState({}, '', url.toString());
+    } catch (e) {
+      console.error('URL update failed', e);
+    }
+  };
+
+  // URL Parameter Handling
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view') as any;
+    const scriptId = params.get('id');
+
+    if (scriptId && scripts.length > 0) {
+      const script = scripts.find(s => s.id === scriptId);
+      if (script) {
+        setSelectedScript(script);
+        setCurrentView('details');
+      }
+    } else if (view && ['scripts', 'executors', 'admin', 'profile', 'settings', 'about', 'slenderhub'].includes(view)) {
+      if (view === 'admin' && !isAdmin) {
+        setCurrentView('scripts');
+      } else {
+        setCurrentView(view);
+      }
+    }
+
+    const handlePopState = () => {
+      const p = new URLSearchParams(window.location.search);
+      const v = p.get('view') || 'scripts';
+      const sid = p.get('id');
+
+      if (sid && scripts.length > 0) {
+        const script = scripts.find(s => s.id === sid);
+        if (script) {
+          setSelectedScript(script);
+          setCurrentView('details');
+        }
+      } else {
+        setCurrentView(v as any);
+        setSelectedScript(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [scripts.length > 0, isAdmin]); // Only re-run when scripts are actually loaded or admin changes
+
   // Modal & Selection States
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isGatewayOpen, setIsGatewayOpen] = useState(false);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [viewProfileAuthor, setViewProfileAuthor] = useState('');
-
-  // Auth State
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // 1. Initial Data Load & Auth Check
   useEffect(() => {
@@ -167,6 +227,7 @@ const App: React.FC = () => {
   const handleScriptClick = (script: Script) => {
     setSelectedScript(script);
     setCurrentView('details');
+    updateURL('details', script.id);
     window.scrollTo(0, 0);
   };
 
@@ -183,12 +244,18 @@ const App: React.FC = () => {
   const handleBackToHub = () => {
     setCurrentView('scripts');
     setSelectedScript(null);
+    updateURL('scripts');
   };
 
   const handleChangeView = (view: any) => {
     if (view === 'admin' && !isAdmin) return;
     setCurrentView(view);
-    if (view === 'scripts' || view === 'executors') setSelectedScript(null);
+    if (view === 'scripts' || view === 'executors') {
+      setSelectedScript(null);
+      updateURL(view);
+    } else {
+      updateURL(view);
+    }
   };
 
   const handleOpenPublish = () => {

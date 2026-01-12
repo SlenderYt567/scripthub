@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, FileCode, Cpu, Shield, Trash2, CheckCircle,
-  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star
+  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link
 } from 'lucide-react';
 import { Script, Executor, AdminUser } from '../types';
 import { supabase } from '../lib/supabase';
@@ -282,6 +282,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <th className="p-4">Title</th>
                   <th className="p-4">Game</th>
                   <th className="p-4">Status</th>
+                  <th className="p-4">External</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -308,7 +309,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </span>
                         )}
                       </td>
-                      <td className="p-4 text-right space-x-2">
+                      <td className="p-4">
+                        <button
+                          onClick={() => {
+                            const url = new URL(window.location.origin);
+                            url.searchParams.set('id', script.id);
+                            window.open(url.toString(), '_blank');
+                          }}
+                          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 transition-colors"
+                        >
+                          <ExternalLink size={14} /> View
+                        </button>
+                      </td>
+                      <td className="p-4 text-right space-x-1 flex items-center justify-end">
                         <button
                           onClick={() => toggleVerifyScript(script.id)}
                           className={`p-2 rounded hover:bg-slate-700 transition-colors ${script.verified ? 'text-green-400' : 'text-slate-500'}`}
@@ -329,6 +342,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           title="Toggle Official Status"
                         >
                           <Star size={16} fill={script.isOfficial ? "currentColor" : "none"} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const url = new URL(window.location.origin);
+                            url.searchParams.set('id', script.id);
+                            navigator.clipboard.writeText(url.toString());
+                            alert('Copied link: ' + url.toString());
+                          }}
+                          className="p-2 rounded text-slate-500 hover:bg-slate-700 transition-colors"
+                          title="Copy Link"
+                        >
+                          <Link size={16} />
                         </button>
                       </td>
                     </tr>
