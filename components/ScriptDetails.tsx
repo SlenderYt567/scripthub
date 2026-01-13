@@ -1,14 +1,21 @@
 import React from 'react';
-import { ArrowLeft, Play, Calendar, User, Eye, ShieldCheck, Gamepad2, AlertTriangle, Link } from 'lucide-react';
+import { ArrowLeft, Play, Calendar, User, Eye, ShieldCheck, Gamepad2, AlertTriangle, Link, Pencil } from 'lucide-react';
 import { Script } from '../types';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface ScriptDetailsProps {
   script: Script;
   onBack: () => void;
   onGetScript: () => void;
+  isAdmin: boolean;
+  user: SupabaseUser | null;
+  onEdit: (script: Script) => void;
 }
 
-const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScript }) => {
+const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScript, isAdmin, user, onEdit }) => {
+  const isAuthor = user?.email?.split('@')[0] === script.author;
+  const canEdit = isAdmin || isAuthor;
+
   return (
     <div className="animate-fade-in">
       {/* Back Button */}
@@ -19,6 +26,16 @@ const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScri
         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
         Back to Hub
       </button>
+
+      {canEdit && (
+        <button
+          onClick={() => onEdit(script)}
+          className="mb-6 flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 font-bold rounded-lg transition-all border border-slate-700 active:scale-95"
+        >
+          <Pencil size={18} />
+          Edit Script
+        </button>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 

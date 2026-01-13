@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, FileCode, Cpu, Shield, Trash2, CheckCircle,
-  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link
+  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil
 } from 'lucide-react';
 import { Script, Executor, AdminUser } from '../types';
 import { supabase } from '../lib/supabase';
+import EditExecutorModal from './EditExecutorModal';
 
 interface AdminDashboardProps {
   scripts: Script[];
   setScripts: React.Dispatch<React.SetStateAction<Script[]>>;
   executors: Executor[];
   setExecutors: React.Dispatch<React.SetStateAction<Executor[]>>;
+  onEditScript: (script: Script) => void;
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  scripts, setScripts, executors, setExecutors
+  scripts, setScripts, executors, setExecutors, onEditScript
 }) => {
   const [activeTab, setActiveTab] = useState<'scripts' | 'executors' | 'users'>('scripts');
   const [showAddExecutor, setShowAddExecutor] = useState(false);
+  const [executorToEdit, setExecutorToEdit] = useState<Executor | null>(null);
 
   // Admin Users State
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
@@ -355,6 +358,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         >
                           <Link size={16} />
                         </button>
+                        <button
+                          onClick={() => onEditScript(script)}
+                          className="p-2 rounded text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                          title="Edit Script"
+                        >
+                          <Pencil size={16} />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -444,7 +454,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <h4 className="font-bold text-white text-lg">{exec.name}</h4>
-                    <button onClick={() => deleteExecutor(exec.id)} className="text-slate-600 hover:text-red-400"><Trash2 size={16} /></button>
+                    <div className="flex gap-1">
+                      <button onClick={() => setExecutorToEdit(exec)} className="text-slate-600 hover:text-indigo-400 p-1"><Pencil size={16} /></button>
+                      <button onClick={() => deleteExecutor(exec.id)} className="text-slate-600 hover:text-red-400 p-1"><Trash2 size={16} /></button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <select
@@ -524,6 +537,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             )}
           </div>
         </div>
+      )}
+
+      {executorToEdit && (
+        <EditExecutorModal
+          isOpen={!!executorToEdit}
+          onClose={() => setExecutorToEdit(null)}
+          executor={executorToEdit}
+          onUpdate={(updated) => {
+            setExecutors(prev => prev.map(e => e.id === updated.id ? updated : e));
+          }}
+        />
       )}
 
     </div>

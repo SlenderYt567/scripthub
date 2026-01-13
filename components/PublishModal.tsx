@@ -8,9 +8,10 @@ interface PublishModalProps {
   onClose: () => void;
   onPublish: (script: Script) => void;
   isAdmin?: boolean;
+  scriptToEdit?: Script | null;
 }
 
-const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish, isAdmin = false }) => {
+const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish, isAdmin = false, scriptToEdit = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState('Guest');
 
@@ -34,9 +35,36 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
   const [activeTaskType, setActiveTaskType] = useState<TaskType | null>(null);
   const [tempTaskUrl, setTempTaskUrl] = useState('');
 
-  // Fetch current user on open
+  // Fetch current user on open or handle edit data
   useEffect(() => {
     if (isOpen) {
+      if (scriptToEdit) {
+        setFormData({
+          title: scriptToEdit.title,
+          gameName: scriptToEdit.gameName,
+          description: scriptToEdit.description || '',
+          rawLink: scriptToEdit.rawLink || '',
+          shortenerLink: scriptToEdit.shortenerLink || '',
+          keySystem: scriptToEdit.keySystem,
+          isOfficial: scriptToEdit.isOfficial || false
+        });
+        setTasks(scriptToEdit.tasks || []);
+        setImagePreview(scriptToEdit.imageUrl);
+      } else {
+        // Reset fields when opening for new script
+        setFormData({
+          title: '',
+          gameName: '',
+          description: '',
+          rawLink: '',
+          shortenerLink: '',
+          keySystem: false,
+          isOfficial: false
+        });
+        setImagePreview(null);
+        setTasks([]);
+      }
+
       supabase.auth.getUser().then(({ data }) => {
         if (data.user?.email) {
           setCurrentUserEmail(data.user.email.split('@')[0]);
@@ -44,12 +72,12 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
       });
     } else {
       // Reset fields when closed
-      setFormData({ title: '', gameName: '', description: '', rawLink: '', shortenerLink: '', keySystem: false });
+      setFormData({ title: '', gameName: '', description: '', rawLink: '', shortenerLink: '', keySystem: false, isOfficial: false });
       setImageFile(null);
       setImagePreview(null);
       setTasks([]);
     }
-  }, [isOpen]);
+  }, [isOpen, scriptToEdit]);
 
   if (!isOpen) return null;
 
@@ -91,8 +119,8 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation: Require Image
-    if (!imageFile) {
+    // Validation: Require Image if NOT editing
+    if (!imageFile && !scriptToEdit) {
       alert("Please select a thumbnail image.");
       return;
     }
@@ -106,40 +134,72 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
     setIsSubmitting(true);
 
     try {
-      // 1. Upload Image to Supabase Storage
-      const fileExt = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `thumbnails/${fileName}`;
+      let publicUrl = scriptToEdit?.imageUrl || '';
 
-      const { error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(filePath, imageFile);
+      // 1. Upload Image to Supabase Storage (Only if new file selected)
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `thumbnails/${fileName}`;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage
+          .from('images')
+          .upload(filePath, imageFile);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('images')
-        .getPublicUrl(filePath);
+        if (uploadError) throw uploadError;
 
-      // 2. Insert Script with Image URL
-      const { data: scriptData, error: scriptError } = await supabase
-        .from('scripts')
-        .insert([{
-          title: formData.title,
-          game_name: formData.gameName,
-          description: formData.description,
-          image_url: publicUrl, // Use the generated URL
-          author: currentUserEmail,
-          raw_link: formData.rawLink || null, // Allow null if empty
-          shortener_link: formData.shortenerLink || null,
-          verified: isAdmin ? true : false, // Auto verify if admin
-          is_official: isAdmin && formData.isOfficial ? true : false,
-          key_system: formData.keySystem // Save boolean
-        }])
-        .select()
-        .single();
+        const { data: { publicUrl: newUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(filePath);
+
+        publicUrl = newUrl;
+      }
+
+      // 2. Insert or Update Script
+      let scriptData, scriptError;
+
+      const payload = {
+        title: formData.title,
+        game_name: formData.gameName,
+        description: formData.description,
+        image_url: publicUrl,
+        author: scriptToEdit ? scriptToEdit.author : currentUserEmail,
+        raw_link: formData.rawLink || null,
+        shortener_link: formData.shortenerLink || null,
+        verified: scriptToEdit ? scriptToEdit.verified : (isAdmin ? true : false),
+        is_official: isAdmin && formData.isOfficial ? true : false,
+        key_system: formData.keySystem
+      };
+
+      if (scriptToEdit) {
+        const { data, error } = await supabase
+          .from('scripts')
+          .update(payload)
+          .eq('id', scriptToEdit.id)
+          .select()
+          .single();
+        scriptData = data;
+        scriptError = error;
+      } else {
+        const { data, error } = await supabase
+          .from('scripts')
+          .insert([payload])
+          .select()
+          .single();
+        scriptData = data;
+        scriptError = error;
+      }
 
       if (scriptError) throw scriptError;
+
+      // 3. Handle Tasks (Delete and Re-insert if editing)
+      if (scriptToEdit) {
+        const { error: deleteError } = await supabase
+          .from('tasks')
+          .delete()
+          .eq('script_id', scriptToEdit.id);
+        if (deleteError) throw deleteError;
+      }
 
       // 3. Insert Tasks if any
       if (tasks.length > 0 && scriptData) {
@@ -223,7 +283,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <UploadCloud className="text-indigo-500" />
-            Create Script Link
+            {scriptToEdit ? 'Edit Script Link' : 'Create Script Link'}
           </h2>
           <button onClick={onClose} className="text-slate-500 hover:text-white">
             <X size={24} />
@@ -269,8 +329,8 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                     <label
                       htmlFor="script-image-upload"
                       className={`w-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all ${imagePreview
-                          ? 'border-indigo-500 bg-indigo-500/10'
-                          : 'border-slate-700 bg-slate-950 hover:border-indigo-500 hover:bg-slate-900'
+                        ? 'border-indigo-500 bg-indigo-500/10'
+                        : 'border-slate-700 bg-slate-950 hover:border-indigo-500 hover:bg-slate-900'
                         }`}
                     >
                       {imagePreview ? (
@@ -457,7 +517,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
             form="publish-form"
             className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : 'Create Link'}
+            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (scriptToEdit ? 'Update Link' : 'Create Link')}
             {!isSubmitting && <ArrowRight size={18} />}
           </button>
         </div>

@@ -93,6 +93,7 @@ const App: React.FC = () => {
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isGatewayOpen, setIsGatewayOpen] = useState(false);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
+  const [scriptToEdit, setScriptToEdit] = useState<Script | null>(null);
   const [viewProfileAuthor, setViewProfileAuthor] = useState('');
 
   // 1. Initial Data Load & Auth Check
@@ -221,7 +222,13 @@ const App: React.FC = () => {
   }, [scripts]);
 
   const handlePublish = async (newScript: Script) => {
+    setScriptToEdit(null);
     await fetchData();
+  };
+
+  const handleEditScript = (script: Script) => {
+    setScriptToEdit(script);
+    setIsPublishOpen(true);
   };
 
   const handleScriptClick = (script: Script) => {
@@ -388,6 +395,7 @@ const App: React.FC = () => {
             setScripts={setScripts}
             executors={executors}
             setExecutors={setExecutors}
+            onEditScript={handleEditScript}
           />
         )}
 
@@ -397,6 +405,9 @@ const App: React.FC = () => {
             script={selectedScript}
             onBack={handleBackToHub}
             onGetScript={handleGetScriptFromDetails}
+            isAdmin={isAdmin}
+            user={user}
+            onEdit={handleEditScript}
           />
         )}
 
@@ -468,9 +479,13 @@ const App: React.FC = () => {
       {/* Modals */}
       <PublishModal
         isOpen={isPublishOpen}
-        onClose={() => setIsPublishOpen(false)}
+        onClose={() => {
+          setIsPublishOpen(false);
+          setScriptToEdit(null);
+        }}
         onPublish={handlePublish}
         isAdmin={isAdmin}
+        scriptToEdit={scriptToEdit}
       />
 
       <GatewayModal
