@@ -9,6 +9,7 @@ import ScriptDetails from './components/ScriptDetails';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
 import ProfileView from './components/ProfileView';
+import AIGeneratorPage from './components/AIGeneratorPage';
 import SettingsView from './components/SettingsView';
 import AboutView from './components/AboutView';
 import { Script, Executor } from './types';
@@ -22,7 +23,7 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub'>('scripts');
+  const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub' | 'ai-generator'>('scripts');
 
   // Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -60,8 +61,8 @@ const App: React.FC = () => {
         setSelectedScript(script);
         setCurrentView('details');
       }
-    } else if (view && ['scripts', 'executors', 'admin', 'profile', 'settings', 'about', 'slenderhub'].includes(view)) {
-      if (view === 'admin' && !isAdmin) {
+    } else if (view && ['scripts', 'executors', 'admin', 'profile', 'settings', 'about', 'slenderhub', 'ai-generator'].includes(view)) {
+      if ((view === 'admin' || view === 'ai-generator') && !isAdmin) {
         setCurrentView('scripts');
       } else {
         setCurrentView(view);
@@ -255,7 +256,7 @@ const App: React.FC = () => {
   };
 
   const handleChangeView = (view: any) => {
-    if (view === 'admin' && !isAdmin) return;
+    if ((view === 'admin' || view === 'ai-generator') && !isAdmin) return;
     setCurrentView(view);
     if (view === 'scripts' || view === 'executors') {
       setSelectedScript(null);
@@ -464,6 +465,11 @@ const App: React.FC = () => {
               </div>
             )}
           </div>
+        )}
+
+        {/* VIEW: AI GENERATOR (Admin Only) */}
+        {currentView === 'ai-generator' && isAdmin && user && (
+          <AIGeneratorPage user={user} onBack={handleBackToHub} />
         )}
 
       </main>
