@@ -405,20 +405,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                   <label
                     htmlFor="executor-image-upload"
-                    className={`h-[50px] w-full flex items-center justify-center border border-dashed rounded-lg cursor-pointer transition-all ${executorImagePreview
-                      ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400'
+                    className={`h-[150px] w-full flex items-center justify-center border border-dashed rounded-lg cursor-pointer transition-all overflow-hidden relative ${executorImagePreview
+                      ? 'border-indigo-500 bg-slate-900'
                       : 'border-slate-700 bg-slate-950 text-slate-400 hover:border-indigo-500 hover:bg-slate-900'
                       }`}
                   >
                     {executorImagePreview ? (
-                      <div className="flex items-center gap-2">
-                        <ImageIcon size={16} />
-                        <span className="text-sm font-bold truncate max-w-[150px]">{executorImageFile?.name}</span>
-                      </div>
+                      <>
+                        <img
+                          src={executorImagePreview}
+                          alt="Preview"
+                          className="w-full h-full object-cover opacity-50"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-2 text-white font-bold">
+                            <ImageIcon size={20} />
+                            <span>Change Image</span>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs text-white truncate text-center">
+                          {executorImageFile?.name}
+                        </div>
+                      </>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <ImageIcon size={16} />
-                        <span className="text-sm">Upload Image</span>
+                      <div className="flex flex-col items-center gap-2">
+                        <ImageIcon size={32} className="opacity-50" />
+                        <span className="text-sm font-bold">Upload Cover Image</span>
+                        <span className="text-xs text-slate-500">1920x1080 Recommended</span>
                       </div>
                     )}
                   </label>

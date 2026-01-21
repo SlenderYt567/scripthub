@@ -37,54 +37,72 @@ const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
   };
 
   return (
-    <div className={`flex flex-col bg-slate-800 border rounded-xl overflow-hidden hover:border-slate-600 transition-all shadow-lg ${
-        executor.status === 'Detected' ? 'border-red-500/30' : 'border-slate-700'
-    }`}>
-      <div className="h-32 bg-slate-900 relative">
-        <img 
-          src={executor.imageUrl} 
-          alt={executor.name} 
-          className="w-full h-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-800 to-transparent"></div>
-        <div className="absolute bottom-4 left-4">
-          <h3 className="text-xl font-bold text-white">{executor.name}</h3>
-        </div>
-      </div>
+    <div className={`group relative flex flex-col bg-slate-900 border transition-all duration-300 rounded-2xl overflow-hidden shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-1 ${executor.status === 'Detected'
+        ? 'border-red-500/30 hover:border-red-500/50'
+        : 'border-slate-800 hover:border-indigo-500/50'
+      }`}>
 
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="flex gap-2 mb-4">
-          <span className={`px-2.5 py-0.5 rounded text-xs font-medium border flex items-center gap-1.5 ${getStatusColor(executor.status)}`}>
-            {getStatusIcon(executor.status)}
-            {executor.status}
-          </span>
-          <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-slate-700 border border-slate-600 text-slate-300 flex items-center gap-1.5">
+      {/* Image Banner */}
+      <div className="h-40 relative overflow-hidden">
+        <div className="absolute inset-0 bg-slate-900/20 z-10 group-hover:bg-slate-900/0 transition-colors duration-500" />
+        <img
+          src={executor.imageUrl}
+          alt={executor.name}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent z-20"></div>
+
+        {/* Float Badges */}
+        <div className="absolute top-3 right-3 z-30 flex gap-2">
+          <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/50 backdrop-blur-md border border-white/10 text-white shadow-lg flex items-center gap-1.5">
             {getPlatformIcon(executor.platform)}
             {executor.platform}
           </span>
         </div>
 
-        <p className="text-slate-400 text-sm mb-6 flex-1">{executor.description}</p>
+        <div className="absolute bottom-4 left-4 z-30">
+          <h3 className="text-2xl font-black text-white tracking-tight drop-shadow-lg group-hover:text-indigo-400 transition-colors">
+            {executor.name}
+          </h3>
+        </div>
+      </div>
 
-        {executor.status === 'Detected' ? (
-           <button 
-             disabled
-             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-900/50 text-red-200 font-bold rounded-lg cursor-not-allowed border border-red-500/20"
-           >
-             <AlertTriangle size={18} />
-             Unsafe to Download
-           </button>
-        ) : (
-          <a 
-            href={executor.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-all active:scale-95 shadow-lg shadow-indigo-900/20"
-          >
-            <Download size={18} />
-            Download
-          </a>
-        )}
+      {/* Content */}
+      <div className="p-5 flex-1 flex flex-col relative z-20 bg-slate-900">
+        <div className="flex items-center justify-between mb-4">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 shadow-sm ${getStatusColor(executor.status)}`}>
+            {getStatusIcon(executor.status)}
+            {executor.status}
+          </span>
+        </div>
+
+        <p className="text-slate-400 text-sm mb-6 flex-1 leading-relaxed border-l-2 border-slate-800 pl-3">
+          {executor.description}
+        </p>
+
+        {/* Action Button */}
+        <div className="mt-auto">
+          {executor.status === 'Detected' ? (
+            <button
+              disabled
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 text-red-400 font-bold rounded-xl cursor-not-allowed border border-red-500/20 opacity-80"
+            >
+              <AlertTriangle size={18} />
+              <span>Unsafe to Use</span>
+            </button>
+          ) : (
+            <a
+              href={executor.downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/btn w-full relative flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/20 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+              <Download size={18} className="relative z-10 transition-transform group-hover/btn:-translate-y-1 group-hover/btn:translate-x-1" />
+              <span className="relative z-10">Download Now</span>
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
