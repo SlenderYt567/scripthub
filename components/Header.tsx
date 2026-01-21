@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Plus, Terminal, Code2, Cpu, LogIn, LayoutDashboard, User, LogOut, Settings, ChevronDown, Flame, FileCode, Bot } from 'lucide-react';
+import { Search, Plus, Terminal, Code2, Cpu, LogIn, LayoutDashboard, User, LogOut, Settings, ChevronDown, Flame, FileCode } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface HeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onOpenPublish: () => void;
-  currentView: 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub' | 'ai-generator';
+  currentView: 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub';
   setCurrentView: (view: any) => void; // Using any to simplify TS for custom views
   isAdmin: boolean;
   user: any; // Supabase user object
@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    if (currentView === 'admin' || currentView === 'settings' || currentView === 'ai-generator') setCurrentView('scripts');
+    if (currentView === 'admin' || currentView === 'settings') setCurrentView('scripts');
     setIsMenuOpen(false);
   };
 
@@ -181,20 +181,12 @@ const Header: React.FC<HeaderProps> = ({
                       <Settings size={16} /> Account Settings
                     </button>
                     {isAdmin && (
-                      <>
-                        <button
-                          onClick={() => { setCurrentView('admin'); setIsMenuOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-900/10 flex items-center gap-2"
-                        >
-                          <LayoutDashboard size={16} /> Admin Panel
-                        </button>
-                        <button
-                          onClick={() => { setCurrentView('ai-generator'); setIsMenuOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-sm text-indigo-400 hover:bg-indigo-900/10 flex items-center gap-2"
-                        >
-                          <Bot size={16} /> AI Generator
-                        </button>
-                      </>
+                      <button
+                        onClick={() => { setCurrentView('admin'); setIsMenuOpen(false); }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-900/10 flex items-center gap-2"
+                      >
+                        <LayoutDashboard size={16} /> Admin Panel
+                      </button>
                     )}
                     <div className="h-px bg-slate-800 my-1"></div>
                     <button
