@@ -5,6 +5,7 @@ import ScriptCard from './components/ScriptCard';
 import PublishModal from './components/PublishModal';
 import GatewayModal from './components/GatewayModal';
 import ExecutorCard from './components/ExecutorCard';
+import ExecutorsView from './components/ExecutorsView';
 import ScriptDetails from './components/ScriptDetails';
 import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
@@ -293,13 +294,22 @@ const App: React.FC = () => {
         {currentView === 'scripts' && (
           <div className="animate-fade-in space-y-10">
             {/* Banner / Intro */}
-            <div className="text-center space-y-4">
-              <h1 className="text-3xl md:text-6xl font-extrabold text-white tracking-tight">
-                Script <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Hub</span>
-              </h1>
-              <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                The ultimate destination for Roblox scripts and executors.
-              </p>
+            <div className="border-b border-slate-800 pb-8 mb-8">
+              <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+                <div>
+                  <h1 className="text-4xl md:text-6xl font-black text-white tracking-widest uppercase font-mono mb-2">
+                    Script<span className="text-stroke text-transparent stroke-emerald-500 text-stroke-1">_Database</span>
+                  </h1>
+                  <p className="text-slate-500 font-mono text-sm max-w-2xl">
+                    &gt; ACCESSING_GLOBAL_REPOSITORY...<br />
+                    &gt; LOADED_MODULES: {scripts.length}
+                  </p>
+                </div>
+                <div className="hidden md:block text-right">
+                  <div className="text-[10px] text-slate-600 font-mono uppercase tracking-widest mb-1">Current_Node</div>
+                  <div className="text-emerald-500 font-bold font-mono">US-EAST-1</div>
+                </div>
+              </div>
             </div>
 
             {loading ? (
@@ -368,24 +378,7 @@ const App: React.FC = () => {
 
         {/* VIEW: EXECUTORS */}
         {currentView === 'executors' && (
-          <div className="animate-fade-in">
-            <div className="mb-10">
-              <h2 className="text-3xl font-bold text-white mb-2">Executors</h2>
-              <p className="text-slate-400">Essential software required to run .lua scripts on Roblox.</p>
-            </div>
-
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 size={48} className="animate-spin text-indigo-500" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {executors.map(executor => (
-                  <ExecutorCard key={executor.id} executor={executor} />
-                ))}
-              </div>
-            )}
-          </div>
+          <ExecutorsView executors={executors} loading={loading} />
         )}
 
         {/* VIEW: ADMIN DASHBOARD */}

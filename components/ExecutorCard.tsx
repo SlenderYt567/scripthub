@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Monitor, Smartphone, Apple, AlertCircle, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { Download, Monitor, Smartphone, Apple, AlertCircle, CheckCircle, Loader2, AlertTriangle, ShieldCheck, Terminal } from 'lucide-react';
 import { Executor } from '../types';
 
 interface ExecutorCardProps {
@@ -7,23 +7,19 @@ interface ExecutorCardProps {
 }
 
 const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Working': return 'text-green-400 bg-green-500/10 border-green-500/20';
-      case 'Patched': return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-      case 'Updating': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
-      case 'Detected': return 'text-red-500 bg-red-500/10 border-red-500/20';
-      default: return 'text-slate-400 bg-slate-500/10 border-slate-500/20';
-    }
-  };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
-      case 'Working': return <CheckCircle size={12} />;
-      case 'Patched': return <AlertCircle size={12} />;
-      case 'Updating': return <Loader2 size={12} className="animate-spin" />;
-      case 'Detected': return <AlertTriangle size={12} />;
-      default: return <CheckCircle size={12} />;
+      case 'Working':
+        return { color: 'text-emerald-400', bg: 'bg-emerald-950/50', border: 'border-emerald-500/50', icon: <CheckCircle size={14} /> };
+      case 'Patched':
+        return { color: 'text-rose-400', bg: 'bg-rose-950/50', border: 'border-rose-500/50', icon: <AlertCircle size={14} /> };
+      case 'Updating':
+        return { color: 'text-amber-400', bg: 'bg-amber-950/50', border: 'border-amber-500/50', icon: <Loader2 size={14} className="animate-spin" /> };
+      case 'Detected':
+        return { color: 'text-rose-600', bg: 'bg-rose-950/80', border: 'border-rose-600', icon: <AlertTriangle size={14} /> };
+      default:
+        return { color: 'text-slate-400', bg: 'bg-slate-900', border: 'border-slate-700', icon: <CheckCircle size={14} /> };
     }
   };
 
@@ -36,70 +32,88 @@ const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
     }
   };
 
-  return (
-    <div className={`group relative flex flex-col bg-slate-900 border transition-all duration-300 rounded-2xl overflow-hidden shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-1 ${executor.status === 'Detected'
-        ? 'border-red-500/30 hover:border-red-500/50'
-        : 'border-slate-800 hover:border-indigo-500/50'
-      }`}>
+  const statusConfig = getStatusConfig(executor.status);
 
-      {/* Image Banner */}
-      <div className="h-40 relative overflow-hidden">
-        <div className="absolute inset-0 bg-slate-900/20 z-10 group-hover:bg-slate-900/0 transition-colors duration-500" />
+  return (
+    <div className={`group relative bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all duration-300 overflow-hidden flex flex-col h-full`}>
+
+      {/* Decorative Corner */}
+      <div className="absolute top-0 right-0 w-8 h-8 bg-slate-900 border-l border-b border-slate-800 group-hover:bg-emerald-500/10 transition-colors z-20"></div>
+
+      {/* Image Section */}
+      <div className="relative h-48 overflow-hidden bg-slate-900 border-b border-slate-800">
+        <div className="absolute inset-0 bg-slate-950/40 z-10 group-hover:bg-transparent transition-colors duration-500" />
+
         <img
           src={executor.imageUrl}
           alt={executor.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+          className="w-full h-full object-cover filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent z-20"></div>
 
-        {/* Float Badges */}
-        <div className="absolute top-3 right-3 z-30 flex gap-2">
-          <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-black/50 backdrop-blur-md border border-white/10 text-white shadow-lg flex items-center gap-1.5">
-            {getPlatformIcon(executor.platform)}
-            {executor.platform}
-          </span>
-        </div>
+        {/* Scanline Effect */}
+        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20 z-10"></div>
 
-        <div className="absolute bottom-4 left-4 z-30">
-          <h3 className="text-2xl font-black text-white tracking-tight drop-shadow-lg group-hover:text-indigo-400 transition-colors">
-            {executor.name}
-          </h3>
+        {/* Status Badge - Top Left */}
+        <div className="absolute top-3 left-3 z-20">
+          <div className={`flex items-center gap-2 px-3 py-1 text-xs font-mono uppercase tracking-wider border ${statusConfig.bg} ${statusConfig.border} ${statusConfig.color} backdrop-blur-sm`}>
+            {statusConfig.icon}
+            <span>{executor.status}</span>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-5 flex-1 flex flex-col relative z-20 bg-slate-900">
-        <div className="flex items-center justify-between mb-4">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-2 shadow-sm ${getStatusColor(executor.status)}`}>
-            {getStatusIcon(executor.status)}
-            {executor.status}
-          </span>
+      {/* Content Section */}
+      <div className="p-5 flex flex-col flex-1 relative">
+        {/* Grid Background */}
+        <div className="absolute inset-0 ml-5 mt-5 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
+
+        <div className="flex items-start justify-between mb-4 relative z-10">
+          <div>
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter group-hover:text-emerald-400 transition-colors">
+              {executor.name}
+            </h3>
+            <div className="flex items-center gap-2 text-slate-500 text-xs font-mono mt-1">
+              {getPlatformIcon(executor.platform)}
+              <span>PLATFORM: {executor.platform.toUpperCase()}</span>
+            </div>
+          </div>
         </div>
 
-        <p className="text-slate-400 text-sm mb-6 flex-1 leading-relaxed border-l-2 border-slate-800 pl-3">
+        <p className="text-slate-400 text-sm mb-6 font-sans leading-relaxed flex-1 border-l border-slate-800 pl-3 group-hover:border-emerald-500/30 transition-colors">
           {executor.description}
         </p>
 
-        {/* Action Button */}
-        <div className="mt-auto">
+        {/* Technical Footer */}
+        <div className="mt-auto space-y-3 relative z-10">
+
+          <div className="flex justify-between items-center text-[10px] text-slate-600 font-mono uppercase border-t border-slate-900 pt-3">
+            <div className="flex items-center gap-1">
+              <Terminal size={10} />
+              <span>v.LATEST</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ShieldCheck size={10} />
+              <span>VERIFIED_HASH</span>
+            </div>
+          </div>
+
           {executor.status === 'Detected' ? (
             <button
               disabled
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 text-red-400 font-bold rounded-xl cursor-not-allowed border border-red-500/20 opacity-80"
+              className="w-full h-10 flex items-center justify-center gap-2 bg-rose-950/30 border border-rose-900 text-rose-500 font-mono text-sm uppercase cursor-not-allowed"
             >
-              <AlertTriangle size={18} />
-              <span>Unsafe to Use</span>
+              <AlertTriangle size={14} />
+              <span>DETECTED // UNSAFE</span>
             </button>
           ) : (
             <a
               href={executor.downloadUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group/btn w-full relative flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/20 overflow-hidden"
+              className="group/btn w-full h-10 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold font-mono text-sm uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
             >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-              <Download size={18} className="relative z-10 transition-transform group-hover/btn:-translate-y-1 group-hover/btn:translate-x-1" />
-              <span className="relative z-10">Download Now</span>
+              <Download size={14} />
+              <span>Initialize_Download</span>
             </a>
           )}
         </div>

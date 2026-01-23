@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, FileCode, Cpu, Shield, Trash2, CheckCircle,
-  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil
+  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil, Database, Terminal, Settings, ShieldAlert
 } from 'lucide-react';
 import { Script, Executor, AdminUser } from '../types';
 import { supabase } from '../lib/supabase';
@@ -243,127 +243,126 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between mb-8">
+    <div className="animate-fade-in space-y-8 font-sans">
+      {/* Dashboard Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-slate-800 pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-white">Admin Dashboard</h2>
-          <p className="text-slate-400">Manage content, verification, and system status.</p>
+          <div className="flex items-center gap-2 text-rose-500 mb-1">
+            <ShieldAlert size={16} />
+            <span className="text-xs font-mono uppercase tracking-widest">Administrator_Access</span>
+          </div>
+          <h2 className="text-3xl font-black text-white uppercase tracking-tight">Command Center</h2>
         </div>
-        <div className="flex bg-slate-800 rounded-lg p-1">
+
+        {/* Tab Controls */}
+        <div className="flex bg-slate-950 border border-slate-800 p-1">
           <button
             onClick={() => setActiveTab('scripts')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'scripts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+            className={`px-6 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all ${activeTab === 'scripts' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-white'
+              }`}
           >
-            Scripts
+            DB_SCRIPTS
           </button>
           <button
             onClick={() => setActiveTab('executors')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'executors' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+            className={`px-6 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all ${activeTab === 'executors' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-white'
+              }`}
           >
-            Executors
+            EXEC_MODULES
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+            className={`px-6 py-2 text-xs font-mono font-bold uppercase tracking-wider transition-all ${activeTab === 'users' ? 'bg-slate-800 text-white border border-slate-600' : 'text-slate-500 hover:text-white'
+              }`}
           >
-            Admins
+            USER_PERMS
           </button>
         </div>
       </div>
 
       {/* --- SCRIPTS TAB --- */}
       {activeTab === 'scripts' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
-            <h3 className="font-bold text-white flex items-center gap-2"><FileCode size={18} /> Manage Scripts</h3>
-            <span className="text-xs text-slate-500">{scripts.length} Total</span>
+        <div className="border border-slate-800 bg-slate-900/50">
+          <div className="p-3 border-b border-slate-800 bg-slate-950 flex justify-between items-center">
+            <h3 className="font-bold text-slate-300 font-mono text-xs uppercase flex items-center gap-2">
+              <Database size={14} className="text-emerald-500" />
+              Query_Results
+            </h3>
+            <span className="text-[10px] font-mono text-slate-500">{scripts.length} RECORDS FOUND</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-400">
-              <thead className="bg-slate-950 text-slate-200 uppercase text-xs font-semibold">
+              <thead className="bg-slate-900 text-slate-500 uppercase text-[10px] font-mono font-bold tracking-wider">
                 <tr>
-                  <th className="p-4">Title</th>
-                  <th className="p-4">Game</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">External</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4 border-r border-slate-800">Title_ID</th>
+                  <th className="p-4 border-r border-slate-800">Target</th>
+                  <th className="p-4 border-r border-slate-800">State</th>
+                  <th className="p-4 border-r border-slate-800">Link</th>
+                  <th className="p-4 text-right">Controls</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
                 {scripts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-slate-500">
-                      No scripts found. Use the "Submit" button to add one.
+                    <td colSpan={5} className="p-8 text-center text-slate-500 font-mono text-xs">
+                      &gt; NO_DATA_AVAILABLE
                     </td>
                   </tr>
                 ) : (
                   scripts.map(script => (
-                    <tr key={script.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="p-4 font-medium text-white">{script.title}</td>
-                      <td className="p-4">{script.gameName}</td>
-                      <td className="p-4">
+                    <tr key={script.id} className="hover:bg-slate-800/30 transition-colors group">
+                      <td className="p-4 font-bold text-white font-mono border-r border-slate-800/50 group-hover:border-slate-800">{script.title}</td>
+                      <td className="p-4 border-r border-slate-800/50 group-hover:border-slate-800">{script.gameName}</td>
+                      <td className="p-4 border-r border-slate-800/50 group-hover:border-slate-800">
                         {script.verified ? (
-                          <span className="inline-flex items-center gap-1 text-green-400 bg-green-500/10 px-2 py-0.5 rounded text-xs font-bold border border-green-500/20">
-                            <ShieldCheck size={10} /> Verified
+                          <span className="text-emerald-400 text-[10px] font-mono uppercase font-bold">
+                            VERIFIED
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-slate-500 bg-slate-500/10 px-2 py-0.5 rounded text-xs font-bold border border-slate-500/20">
-                            Unverified
+                          <span className="text-amber-500 text-[10px] font-mono uppercase font-bold">
+                            UNVERIFIED
                           </span>
                         )}
                       </td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => {
-                            const url = new URL(window.location.origin);
-                            url.searchParams.set('id', script.id);
-                            window.open(url.toString(), '_blank');
-                          }}
-                          className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 transition-colors"
+                      <td className="p-4 border-r border-slate-800/50 group-hover:border-slate-800">
+                        <a
+                          href={`/?id=${script.id}`}
+                          target="_blank"
+                          className="text-xs text-indigo-400 hover:underline font-mono"
                         >
-                          <ExternalLink size={14} /> View
-                        </button>
+                          EXTERNAL_LINK
+                        </a>
                       </td>
-                      <td className="p-4 text-right space-x-1 flex items-center justify-end">
+                      <td className="p-4 text-right space-x-2 flex items-center justify-end">
                         <button
                           onClick={() => toggleVerifyScript(script.id)}
-                          className={`p-2 rounded hover:bg-slate-700 transition-colors ${script.verified ? 'text-green-400' : 'text-slate-500'}`}
-                          title="Toggle Verification"
+                          className={`p-1.5 border hover:bg-slate-800 transition-colors ${script.verified ? 'text-emerald-400 border-emerald-500/30' : 'text-slate-600 border-slate-700'
+                            }`}
+                          title="Verify Hash"
                         >
-                          <ShieldCheck size={16} />
-                        </button>
-                        <button
-                          onClick={() => deleteScript(script.id)}
-                          className="p-2 rounded text-red-400 hover:bg-red-500/10 transition-colors"
-                          title="Delete Script"
-                        >
-                          <Trash2 size={16} />
+                          <ShieldCheck size={14} />
                         </button>
                         <button
                           onClick={() => toggleOfficialScript(script.id)}
-                          className={`p-2 rounded hover:bg-slate-700 transition-colors ${script.isOfficial ? 'text-indigo-400' : 'text-slate-600'}`}
-                          title="Toggle Official Status"
+                          className={`p-1.5 border hover:bg-slate-800 transition-colors ${script.isOfficial ? 'text-indigo-400 border-indigo-500/30' : 'text-slate-600 border-slate-700'
+                            }`}
+                          title="Official Mark"
                         >
-                          <Star size={16} fill={script.isOfficial ? "currentColor" : "none"} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            const url = new URL(window.location.origin);
-                            url.searchParams.set('id', script.id);
-                            navigator.clipboard.writeText(url.toString());
-                            alert('Copied link: ' + url.toString());
-                          }}
-                          className="p-2 rounded text-slate-500 hover:bg-slate-700 transition-colors"
-                          title="Copy Link"
-                        >
-                          <Link size={16} />
+                          <Star size={14} fill={script.isOfficial ? "currentColor" : "none"} />
                         </button>
                         <button
                           onClick={() => onEditScript(script)}
-                          className="p-2 rounded text-indigo-400 hover:bg-indigo-500/10 transition-colors"
-                          title="Edit Script"
+                          className="p-1.5 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                          title="Edit"
                         >
-                          <Pencil size={16} />
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => deleteScript(script.id)}
+                          className="p-1.5 border border-slate-700 text-slate-600 hover:text-rose-400 hover:border-rose-900 transition-colors"
+                          title="Purge"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </td>
                     </tr>
@@ -381,18 +380,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddExecutor(!showAddExecutor)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all"
+              className="flex items-center gap-2 px-6 py-3 bg-slate-900 border border-slate-700 hover:border-emerald-500 text-emerald-400 font-mono text-xs font-bold uppercase tracking-wider transition-all"
             >
-              {showAddExecutor ? <X size={18} /> : <Plus size={18} />}
-              {showAddExecutor ? 'Cancel' : 'Add Executor'}
+              {showAddExecutor ? <X size={16} /> : <Plus size={16} />}
+              {showAddExecutor ? 'ABORT_SEQUENCE' : 'INITIATE_NEW_MODULE'}
             </button>
           </div>
 
           {showAddExecutor && (
-            <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 animate-fade-in-up">
-              <h3 className="text-lg font-bold text-white mb-4">Launch New Executor</h3>
+            <div className="bg-slate-950 border border-slate-700 p-6 animate-fade-in-up">
+              <h3 className="text-sm font-bold text-white mb-4 font-mono uppercase border-b border-slate-800 pb-2">Module_Configuration_Panel</h3>
               <form onSubmit={handleAddExecutor} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input required placeholder="Executor Name" value={newExecutor.name} onChange={e => setNewExecutor({ ...newExecutor, name: e.target.value })} className="bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none" />
+                <input required placeholder="MODULE_NAME" value={newExecutor.name} onChange={e => setNewExecutor({ ...newExecutor, name: e.target.value })} className="bg-slate-900 border border-slate-700 p-3 text-white focus:border-emerald-500 outline-none font-mono text-xs" />
 
                 {/* Image Upload for Executor */}
                 <div className="relative group">
@@ -405,9 +404,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                   <label
                     htmlFor="executor-image-upload"
-                    className={`h-[150px] w-full flex items-center justify-center border border-dashed rounded-lg cursor-pointer transition-all overflow-hidden relative ${executorImagePreview
-                      ? 'border-indigo-500 bg-slate-900'
-                      : 'border-slate-700 bg-slate-950 text-slate-400 hover:border-indigo-500 hover:bg-slate-900'
+                    className={`h-[150px] w-full flex items-center justify-center border border-dashed cursor-pointer transition-all overflow-hidden relative ${executorImagePreview
+                      ? 'border-emerald-500 bg-slate-900'
+                      : 'border-slate-700 bg-slate-900 text-slate-500 hover:border-emerald-500'
                       }`}
                   >
                     {executorImagePreview ? (
@@ -415,46 +414,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <img
                           src={executorImagePreview}
                           alt="Preview"
-                          className="w-full h-full object-cover opacity-50"
+                          className="w-full h-full object-cover opacity-50 grayscale"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity">
-                          <div className="flex items-center gap-2 text-white font-bold">
-                            <ImageIcon size={20} />
-                            <span>Change Image</span>
-                          </div>
-                        </div>
-                        <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs text-white truncate text-center">
-                          {executorImageFile?.name}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 hover:opacity-100 transition-opacity">
+                          <span className="font-mono text-xs text-emerald-400">REPLACE_ASSET</span>
                         </div>
                       </>
                     ) : (
                       <div className="flex flex-col items-center gap-2">
-                        <ImageIcon size={32} className="opacity-50" />
-                        <span className="text-sm font-bold">Upload Cover Image</span>
-                        <span className="text-xs text-slate-500">1920x1080 Recommended</span>
+                        <ImageIcon size={24} className="opacity-50" />
+                        <span className="text-xs font-mono uppercase">UPLOAD_TEXTURE</span>
                       </div>
                     )}
                   </label>
                 </div>
 
-                <input required placeholder="Download URL (Direct Link)" value={newExecutor.downloadUrl} onChange={e => setNewExecutor({ ...newExecutor, downloadUrl: e.target.value })} className="bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none" />
-                <select value={newExecutor.platform} onChange={e => setNewExecutor({ ...newExecutor, platform: e.target.value as any })} className="bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none">
+                <input required placeholder="DOWNLOAD_ENDPOINT_URI" value={newExecutor.downloadUrl} onChange={e => setNewExecutor({ ...newExecutor, downloadUrl: e.target.value })} className="bg-slate-900 border border-slate-700 p-3 text-white focus:border-emerald-500 outline-none font-mono text-xs" />
+                <select value={newExecutor.platform} onChange={e => setNewExecutor({ ...newExecutor, platform: e.target.value as any })} className="bg-slate-900 border border-slate-700 p-3 text-white focus:border-emerald-500 outline-none font-mono text-xs uppercase">
                   <option value="Windows">Windows</option>
                   <option value="Android">Android</option>
                   <option value="iOS">iOS</option>
                   <option value="Mac">Mac</option>
                 </select>
-                <select value={newExecutor.status} onChange={e => setNewExecutor({ ...newExecutor, status: e.target.value as any })} className="bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none">
+                <select value={newExecutor.status} onChange={e => setNewExecutor({ ...newExecutor, status: e.target.value as any })} className="bg-slate-900 border border-slate-700 p-3 text-white focus:border-emerald-500 outline-none font-mono text-xs uppercase">
                   <option value="Working">Working</option>
                   <option value="Updating">Updating</option>
                   <option value="Patched">Patched</option>
                   <option value="Detected">Detected</option>
                 </select>
                 <div className="md:col-span-2">
-                  <textarea placeholder="Description (Optional)" value={newExecutor.description} onChange={e => setNewExecutor({ ...newExecutor, description: e.target.value })} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none h-20 resize-none" />
+                  <textarea placeholder="MODULE_DESCRIPTION" value={newExecutor.description} onChange={e => setNewExecutor({ ...newExecutor, description: e.target.value })} className="w-full bg-slate-900 border border-slate-700 p-3 text-white focus:border-emerald-500 outline-none h-20 resize-none font-mono text-xs" />
                 </div>
-                <button type="submit" disabled={isSubmittingExecutor} className="md:col-span-2 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
-                  {isSubmittingExecutor ? <Loader2 className="animate-spin" /> : 'Launch Executor'}
+                <button type="submit" disabled={isSubmittingExecutor} className="md:col-span-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold font-mono text-xs uppercase transition-colors flex items-center justify-center gap-2">
+                  {isSubmittingExecutor ? <Loader2 className="animate-spin" /> : 'DEPLOY_MODULE'}
                 </button>
               </form>
             </div>
@@ -462,24 +454,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {executors.map(exec => (
-              <div key={exec.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex gap-4">
-                <img src={exec.imageUrl} className="w-20 h-20 object-cover rounded-lg bg-slate-800" alt={exec.name} />
+              <div key={exec.id} className="bg-slate-900 border border-slate-800 p-4 flex gap-4 group hover:border-slate-600 transition-colors">
+                <img src={exec.imageUrl} className="w-20 h-20 object-cover bg-slate-950 grayscale group-hover:grayscale-0 transition-all border border-slate-800" alt={exec.name} />
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-white text-lg">{exec.name}</h4>
+                    <h4 className="font-bold text-white text-lg font-mono uppercase">{exec.name}</h4>
                     <div className="flex gap-1">
-                      <button onClick={() => setExecutorToEdit(exec)} className="text-slate-600 hover:text-indigo-400 p-1"><Pencil size={16} /></button>
-                      <button onClick={() => deleteExecutor(exec.id)} className="text-slate-600 hover:text-red-400 p-1"><Trash2 size={16} /></button>
+                      <button onClick={() => setExecutorToEdit(exec)} className="text-slate-600 hover:text-indigo-400 p-1"><Pencil size={14} /></button>
+                      <button onClick={() => deleteExecutor(exec.id)} className="text-slate-600 hover:text-red-400 p-1"><Trash2 size={14} /></button>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <select
                       value={exec.status}
                       onChange={(e) => updateExecutorStatus(exec.id, e.target.value as any)}
-                      className={`text-xs font-bold rounded px-2 py-1 border outline-none cursor-pointer bg-slate-950 ${exec.status === 'Working' ? 'text-green-400 border-green-500/30' :
-                        exec.status === 'Detected' ? 'text-red-500 border-red-500/30' :
-                          exec.status === 'Patched' ? 'text-orange-400 border-orange-500/30' :
-                            'text-yellow-400 border-yellow-500/30'
+                      className={`text-[10px] font-mono font-bold uppercase px-2 py-1 border outline-none cursor-pointer bg-slate-950 w-full max-w-[100px] ${exec.status === 'Working' ? 'text-emerald-400 border-emerald-900' :
+                        exec.status === 'Detected' ? 'text-rose-500 border-rose-900' :
+                          'text-amber-400 border-amber-900'
                         }`}
                     >
                       <option value="Working">Working</option>
@@ -487,42 +478,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <option value="Patched">Patched</option>
                       <option value="Detected">Detected</option>
                     </select>
-                    <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">{exec.platform}</span>
+                    <span className="text-[10px] text-slate-500 bg-slate-950 border border-slate-800 px-2 py-1 uppercase font-mono">{exec.platform}</span>
                   </div>
-                  <div className="mt-2 text-xs text-slate-500 truncate">{exec.downloadUrl}</div>
                 </div>
               </div>
             ))}
-            {executors.length === 0 && (
-              <div className="col-span-full py-10 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
-                No executors found. Click "Add Executor" to create one.
-              </div>
-            )}
           </div>
         </div>
       )}
 
       {/* --- USERS TAB --- */}
       {activeTab === 'users' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-6">
+        <div className="bg-slate-900 border border-slate-800 p-6">
           <div className="mb-6 flex gap-4">
             <div className="relative flex-1">
-              <Mail className="absolute left-3 top-3.5 text-slate-500" size={16} />
+              <div className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center border-r border-slate-700 bg-slate-800">
+                <Mail size={14} className="text-slate-400" />
+              </div>
               <input
                 value={newAdminEmail}
                 type="email"
                 onChange={(e) => setNewAdminEmail(e.target.value)}
-                placeholder="New Admin Email (User must sign up first)"
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-white focus:border-indigo-500 outline-none"
+                placeholder="USER_EMAIL_ADDRESS"
+                className="w-full bg-slate-950 border border-slate-700 pl-12 pr-3 py-3 text-white focus:border-indigo-500 outline-none font-mono text-xs"
               />
             </div>
-            <button onClick={handleAddAdmin} className="px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg whitespace-nowrap">
-              Grant Access
+            <button onClick={handleAddAdmin} className="px-6 bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold uppercase rounded-none border border-indigo-400">
+              GRANT_PERMISSION
             </button>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Authorized Personnel</h3>
+            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 font-mono">Permission_Table</h3>
 
             {loadingAdmins ? (
               <div className="flex justify-center py-4">
@@ -530,19 +517,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             ) : (
               adminUsers.map(user => (
-                <div key={user.id} className="flex items-center justify-between p-4 bg-slate-800 rounded-lg border border-slate-700">
+                <div key={user.id} className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 hover:border-slate-600 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                      <Shield size={20} />
+                    <div className="w-8 h-8 bg-indigo-900/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                      <Shield size={14} />
                     </div>
                     <div>
-                      <p className="font-bold text-white">{user.email}</p>
-                      <p className="text-xs text-slate-400">{user.role}</p>
+                      <p className="font-bold text-slate-300 font-mono text-xs">{user.email}</p>
+                      <p className="text-[10px] text-slate-600 uppercase tracking-wider">{user.role}</p>
                     </div>
                   </div>
                   {user.role !== 'Owner' && (
-                    <button onClick={() => handleDeleteAdmin(user.id, user.role)} className="text-slate-500 hover:text-red-400 p-2">
-                      <Trash2 size={18} />
+                    <button onClick={() => handleDeleteAdmin(user.id, user.role)} className="text-slate-600 hover:text-rose-500 p-2">
+                      <Trash2 size={14} />
                     </button>
                   )}
                 </div>

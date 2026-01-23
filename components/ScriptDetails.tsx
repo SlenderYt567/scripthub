@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Play, Calendar, User, Eye, ShieldCheck, Gamepad2, AlertTriangle, Link, Pencil } from 'lucide-react';
+import { ArrowLeft, Play, Calendar, User, Eye, ShieldCheck, Gamepad2, AlertTriangle, Link, Pencil, Terminal, Hash, FileCode } from 'lucide-react';
 import { Script } from '../types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -17,112 +17,147 @@ const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScri
   const canEdit = isAdmin || isAuthor;
 
   return (
-    <div className="animate-fade-in">
-      {/* Back Button */}
-      <button
-        onClick={onBack}
-        className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
-      >
-        <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-        Back to Hub
-      </button>
-
-      {canEdit && (
+    <div className="animate-fade-in font-sans">
+      {/* Navigation Bar */}
+      <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-4">
         <button
-          onClick={() => onEdit(script)}
-          className="mb-6 flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 hover:text-indigo-300 font-bold rounded-lg transition-all border border-slate-700 active:scale-95"
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors uppercase font-mono text-xs font-bold tracking-wider group"
         >
-          <Pencil size={18} />
-          Edit Script
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          RETURN_TO_INDEX
         </button>
-      )}
+
+        {canEdit && (
+          <button
+            onClick={() => onEdit(script)}
+            className="flex items-center gap-2 px-4 py-1.5 bg-slate-900 border border-slate-700 hover:border-indigo-500 text-indigo-400 hover:text-indigo-300 font-mono text-xs uppercase transition-all"
+          >
+            <Pencil size={12} />
+            EDIT_SOURCE
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Left Column: Image & Stats */}
+        {/* Left Column: Visuals & Data */}
         <div className="space-y-6">
-          <div className="rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-slate-800">
+          {/* Image Container */}
+          <div className="relative border border-slate-700 bg-slate-950 overflow-hidden group">
+            <div className="absolute inset-0 bg-slate-950/20 group-hover:bg-transparent transition-all z-10" />
+            <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] pointer-events-none opacity-30 z-20" />
+
             <img
               src={script.imageUrl}
               alt={script.title}
-              className="w-full h-auto object-cover aspect-video"
+              className="w-full h-auto object-cover aspect-video filter grayscale group-hover:grayscale-0 transition-all duration-700"
             />
+
+            {/* Overlay Tags */}
+            <div className="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-slate-950 to-transparent z-30 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-emerald-400">
+                <ShieldCheck size={14} />
+                <span>{script.verified ? 'VERIFIED_HASH' : 'UNVERIFIED'}</span>
+              </div>
+              {script.isOfficial && (
+                <span className="text-[10px] bg-emerald-500 text-slate-950 px-2 py-0.5 font-bold uppercase tracking-wider">
+                  Official
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700/50 p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Script Info</h3>
-
-            <div className="flex items-center justify-between py-2 border-b border-slate-700/50">
-              <span className="flex items-center gap-2 text-slate-300 text-sm">
-                <User size={16} className="text-indigo-500" /> Author
-              </span>
-              <span className="text-white font-medium">{script.author}</span>
+          {/* Data Grid */}
+          <div className="border border-slate-800 bg-slate-900/50">
+            <div className="bg-slate-900 px-4 py-2 border-b border-slate-800 flex items-center gap-2">
+              <Terminal size={14} className="text-emerald-500" />
+              <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest font-mono">Module_Data</h3>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-slate-700/50">
-              <span className="flex items-center gap-2 text-slate-300 text-sm">
-                <Gamepad2 size={16} className="text-indigo-500" /> Game
-              </span>
-              <span className="text-white font-medium">{script.gameName}</span>
-            </div>
+            <div className="divide-y divide-slate-800 text-sm">
+              <div className="grid grid-cols-2 p-3 hover:bg-slate-800/30 transition-colors">
+                <span className="text-slate-500 font-mono text-xs uppercase">Author_ID</span>
+                <div className="text-right font-mono text-slate-300 flex items-center justify-end gap-2">
+                  <span className="text-emerald-500">@</span>{script.author}
+                </div>
+              </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-slate-700/50">
-              <span className="flex items-center gap-2 text-slate-300 text-sm">
-                <Eye size={16} className="text-indigo-500" /> Views
-              </span>
-              <span className="text-white font-medium">{script.views.toLocaleString()}</span>
-            </div>
+              <div className="grid grid-cols-2 p-3 hover:bg-slate-800/30 transition-colors">
+                <span className="text-slate-500 font-mono text-xs uppercase">Target_App</span>
+                <div className="text-right text-slate-200 font-bold flex items-center justify-end gap-2">
+                  <Gamepad2 size={12} className="text-indigo-400" />
+                  {script.gameName}
+                </div>
+              </div>
 
-            <div className="flex items-center justify-between py-2">
-              <span className="flex items-center gap-2 text-slate-300 text-sm">
-                <Calendar size={16} className="text-indigo-500" /> Posted
-              </span>
-              <span className="text-white font-medium">
-                {new Date(script.createdAt).toLocaleDateString()}
-              </span>
+              <div className="grid grid-cols-2 p-3 hover:bg-slate-800/30 transition-colors">
+                <span className="text-slate-500 font-mono text-xs uppercase">Total_Hits</span>
+                <div className="text-right font-mono text-slate-300">
+                  {script.views.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 p-3 hover:bg-slate-800/30 transition-colors">
+                <span className="text-slate-500 font-mono text-xs uppercase">Compile_Date</span>
+                <div className="text-right font-mono text-slate-300">
+                  {new Date(script.createdAt).toLocaleDateString()}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Title, Desc, Actions */}
+        {/* Right Column: Descriptions & Controls */}
         <div className="lg:col-span-2 flex flex-col">
-          <div className="mb-6">
+          <div className="mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-bold uppercase tracking-wider">
-                Lua Script
-              </span>
-              <span className="px-3 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheck size={12} /> Verified
-              </span>
+              <div className="px-2 py-1 bg-slate-800 border border-slate-700 text-[10px] font-mono uppercase text-indigo-400">
+                LUA_SOURCE
+              </div>
+              {script.keySystem ? (
+                <div className="px-2 py-1 bg-amber-950/30 border border-amber-900/50 text-[10px] font-mono uppercase text-amber-500">
+                  KEY_SYSTEM_ACTIVE
+                </div>
+              ) : (
+                <div className="px-2 py-1 bg-emerald-950/30 border border-emerald-900/50 text-[10px] font-mono uppercase text-emerald-500">
+                  NO_KEY_REQUIRED
+                </div>
+              )}
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
+
+            <h1 className="text-3xl md:text-5xl font-black text-white leading-none tracking-tight mb-6 uppercase">
               {script.title}
             </h1>
-            <p className="text-slate-400 leading-relaxed text-lg">
-              {script.description}
-            </p>
+
+            <div className="prose prose-invert border-l-2 border-slate-700 pl-6 py-2">
+              <p className="text-slate-400 leading-relaxed text-lg">
+                {script.description}
+              </p>
+            </div>
           </div>
 
-          <div className="bg-slate-900 rounded-xl border border-slate-800 p-6 mb-8">
-            <h3 className="text-white font-bold mb-3 flex items-center gap-2">
-              <AlertTriangle size={18} className="text-yellow-500" />
-              Before you execute
+          <div className="bg-rose-950/10 border border-rose-900/30 p-4 mb-8">
+            <h3 className="text-rose-400 font-bold mb-2 flex items-center gap-2 text-xs font-mono uppercase tracking-wider">
+              <AlertTriangle size={14} />
+              Execution_Warnings
             </h3>
-            <ul className="space-y-2 text-sm text-slate-400 list-disc list-inside">
-              <li>Ensure you have a compatible executor (Fluxus, Delta, Wave, etc.)</li>
-              <li>Use this script at your own risk. Nexus is not responsible for bans.</li>
-              <li>If the script is patched, please wait for an update.</li>
+            <ul className="space-y-1 text-xs text-rose-300/80 font-mono list-disc list-inside">
+              <li>Requires compliant executor environment (Fluxus, Delta, etc.)</li>
+              <li>Unauthorized usage may result in account termination.</li>
+              <li>Always check for 'Patched' status before injection.</li>
             </ul>
           </div>
 
-          <div className="mt-auto pt-6 border-t border-slate-800 flex flex-col md:flex-row gap-4">
+          <div className="mt-auto pt-6 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={onGetScript}
-              className="flex-1 flex items-center justify-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-lg font-bold rounded-xl transition-all shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-95"
+              className="group relative flex items-center justify-center gap-4 px-8 py-5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-lg font-bold font-mono tracking-wider uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
             >
-              <Play size={24} fill="currentColor" />
-              Get Script
+              <FileCode className="group-hover:rotate-12 transition-transform" />
+              INITIATE_SCRIPT
             </button>
+
             <button
               onClick={() => {
                 const url = new URL(window.location.origin);
@@ -130,15 +165,17 @@ const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScri
                 navigator.clipboard.writeText(url.toString());
                 alert('Script link copied to clipboard!');
               }}
-              className="flex items-center justify-center gap-2 px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all border border-slate-700 active:scale-95"
+              className="flex items-center justify-center gap-3 px-6 py-5 bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 text-white font-mono uppercase text-sm transition-all"
             >
-              <Link size={20} />
-              Share
+              <Link size={18} />
+              COPY_DIRECT_LINK
             </button>
           </div>
-          <p className="text-center md:text-left mt-3 text-xs text-slate-500">
-            Clicking this will open the secure gateway to generate the loadstring.
-          </p>
+
+          <div className="mt-3 flex items-center justify-center md:justify-start gap-2 text-[10px] text-slate-600 font-mono uppercase">
+            <div className="w-2 h-2 bg-emerald-500 rounded-none animate-pulse" />
+            SECURE_GATEWAY_READY
+          </div>
         </div>
 
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Gamepad2, ChevronRight, User, Key, LockOpen } from 'lucide-react';
+import { Eye, Gamepad2, ChevronRight, User, Key, LockOpen, Hash, Copy } from 'lucide-react';
 import { Script } from '../types';
 
 interface ScriptCardProps {
@@ -20,95 +20,95 @@ const ScriptCard: React.FC<ScriptCardProps> = ({ script, onClick, onAuthorClick 
   return (
     <div
       onClick={() => onClick(script)}
-      className="group cursor-pointer relative flex flex-col bg-slate-800 border border-slate-700/50 rounded-xl overflow-hidden hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 h-full"
+      className="group cursor-pointer relative flex flex-col bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all duration-300 h-full overflow-hidden"
     >
 
-      {/* Thumbnail */}
-      <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+      {/* Decorative Corner */}
+      <div className="absolute top-0 left-0 w-2 h-2 bg-emerald-500/50 opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
+
+      {/* Thumbnail Section */}
+      <div className="relative h-44 w-full overflow-hidden bg-slate-900 border-b border-slate-800">
+        <div className="absolute inset-0 bg-slate-950/30 z-10 group-hover:bg-transparent transition-colors duration-500" />
+
         <img
           src={script.imageUrl}
           alt={script.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105"
           onError={(e) => {
             (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${script.id}/400/200`;
           }}
         />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
 
-        {/* Official Tag */}
-        {script.isOfficial && (
-          <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-indigo-500 text-white backdrop-blur-md border border-indigo-400 shadow-lg shadow-indigo-500/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-              SLENDERHUB
-            </span>
+        {/* Scanlines */}
+        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20 z-10"></div>
+
+        {/* Game Tag - Top Left */}
+        <div className="absolute top-0 left-0 z-20 p-2">
+          <div className="bg-black/70 backdrop-blur-sm border border-slate-700 px-2 py-1 flex items-center gap-1.5 text-[10px] font-mono uppercase text-emerald-400">
+            <Gamepad2 size={10} />
+            <span className="truncate max-w-[120px]">{script.gameName}</span>
           </div>
-        )}
-
-        {/* Game Tag */}
-        <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-slate-950/60 text-indigo-400 backdrop-blur-md border border-slate-700/50 shadow-lg">
-            <Gamepad2 size={12} />
-            {script.gameName}
-          </span>
         </div>
 
-        {/* Key System Badge */}
-        <div className={`absolute ${script.isOfficial ? 'top-12' : 'top-3'} right-3 transition-all`}>
+        {/* Key System Badge - Top Right */}
+        <div className="absolute top-0 right-0 z-20 p-2">
           {script.keySystem ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-amber-500/20 text-amber-400 backdrop-blur-md border border-amber-500/30 shadow-lg">
-              <Key size={12} />
-              Key System
-            </span>
+            <div className="bg-amber-950/80 border border-amber-500/50 px-2 py-1 flex items-center gap-1.5 text-[10px] font-mono uppercase text-amber-400">
+              <Key size={10} />
+              <span>KEY_REQ</span>
+            </div>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide bg-emerald-500/20 text-emerald-400 backdrop-blur-md border border-emerald-500/30 shadow-lg">
-              <LockOpen size={12} />
-              No Key
-            </span>
+            <div className="bg-emerald-950/80 border border-emerald-500/50 px-2 py-1 flex items-center gap-1.5 text-[10px] font-mono uppercase text-emerald-400">
+              <LockOpen size={10} />
+              <span>FREE</span>
+            </div>
           )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex flex-col flex-1 p-5">
-        <h3 className="text-lg font-bold text-white line-clamp-2 leading-tight group-hover:text-indigo-400 transition-colors mb-2">
+      <div className="flex flex-col flex-1 p-4 relative">
+        {/* Grid Background */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '8px 8px' }}></div>
+
+        {script.isOfficial && (
+          <div className="absolute -top-3 left-4 px-2 py-0.5 bg-emerald-600 text-[10px] font-bold text-slate-900 tracking-wider uppercase shadow-lg">
+            Official_Verified
+          </div>
+        )}
+
+        <h3 className="text-base font-bold text-slate-100 line-clamp-2 leading-snug group-hover:text-emerald-400 transition-colors mb-3 mt-1 font-sans tracking-tight">
           {script.title}
         </h3>
 
-        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-700/50">
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="mt-auto space-y-3 pt-3 border-t border-slate-800/50">
+
+          {/* Metadata Row */}
+          <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
             <div
-              className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-1 hover:text-emerald-400 transition-colors"
               onClick={handleAuthorClick}
-              title="View Profile"
             >
-              <User size={14} className="text-slate-500" />
-              <span className="truncate max-w-[80px]">{script.author}</span>
+              <User size={12} />
+              <span className="uppercase">{script.author}</span>
             </div>
-            <span className="text-slate-600">•</span>
-            <div className="flex items-center gap-1.5">
-              <Eye size={14} className="text-slate-500" />
-              <span>{script.views.toLocaleString()}</span>
+
+            <div className="flex items-center gap-1">
+              <Eye size={12} />
+              <span>{typeof (script.views) === 'number' ? script.views.toLocaleString() : '0'}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const url = new URL(window.location.origin);
-                url.searchParams.set('id', script.id);
-                navigator.clipboard.writeText(url.toString());
-                alert('Script link copied to clipboard!');
-              }}
-              className="p-2 rounded-full bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
-              title="Copy Link"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-            </button>
-            <button className="p-2 rounded-full bg-slate-700/50 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-              <ChevronRight size={16} />
+          {/* Action Row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 text-[10px] text-slate-600 font-mono">
+              <Hash size={10} />
+              <span className="truncate w-16">ID_{script.id.slice(0, 6)}</span>
+            </div>
+
+            <button className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs text-slate-300 hover:text-emerald-400 font-mono transition-all group/btn">
+              <span>VIEW_SOURCE</span>
+              <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
             </button>
           </div>
         </div>
