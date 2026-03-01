@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, FileCode, Cpu, Shield, Trash2, CheckCircle,
-  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil, Database, Terminal, Settings, ShieldAlert
+  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil, Database, Terminal, Settings, ShieldAlert, Zap
 } from 'lucide-react';
 import { Script, Executor, AdminUser } from '../types';
 import { supabase } from '../lib/supabase';
