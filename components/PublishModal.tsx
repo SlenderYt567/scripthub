@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, UploadCloud, Link as LinkIcon, Youtube, MessageCircle, Globe, Plus, Trash2, ArrowRight, Loader2, Image as ImageIcon, Key } from 'lucide-react';
+import { X, UploadCloud, Link as LinkIcon, Youtube, MessageCircle, Globe, Plus, Trash2, ArrowRight, Loader2, Image as ImageIcon, Key, Star, Sparkles, CheckCircle2, ExternalLink } from 'lucide-react';
 import { Script, Task, TaskType } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -231,7 +231,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
           shortenerLink: scriptData.shortener_link,
           tasks: tasks,
           createdAt: Date.now(),
-          verified: isAdmin,
+          verified: isAdmin || (scriptToEdit ? scriptToEdit.verified : false),
           isOfficial: isAdmin && formData.isOfficial,
           keySystem: formData.keySystem
         };
@@ -263,97 +263,79 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
 
   const getTaskColor = (type: TaskType) => {
     switch (type) {
-      case 'youtube_subscribe': return 'bg-red-600 hover:bg-red-500 border-red-500';
-      case 'youtube_like': return 'bg-red-600 hover:bg-red-500 border-red-500';
-      case 'discord_join': return 'bg-indigo-600 hover:bg-indigo-500 border-indigo-500';
-      case 'visit_url': return 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500';
+      case 'youtube_subscribe': return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+      case 'youtube_like': return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+      case 'discord_join': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30';
+      case 'visit_url': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/70 backdrop-blur-md transition-opacity duration-300"
         onClick={onClose}
       ></div>
 
-      <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-5xl bg-slate-900/90 border border-slate-800/80 rounded-[2.5rem] shadow-2xl backdrop-blur-3xl flex flex-col max-h-[92vh] overflow-hidden animate-fade-in-up">
+
+        {/* Dynamic Background Effects */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none"></div>
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/5 blur-[100px] rounded-full pointer-events-none"></div>
 
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <UploadCloud className="text-indigo-500" />
-            {scriptToEdit ? 'Edit Script Link' : 'Create Script Link'}
-          </h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-white">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-800/60 relative z-10 bg-slate-900/40">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <UploadCloud size={24} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+                {scriptToEdit ? 'Module Configuration' : 'Script Deployment'}
+              </h2>
+              <p className="text-xs text-slate-500 font-mono tracking-widest uppercase">System_Protocol_v2.4</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-3 rounded-2xl text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all"
+          >
             <X size={24} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto p-6 flex-1 custom-scrollbar">
-          <form id="publish-form" onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-8">
+        <div className="overflow-y-auto p-8 md:p-10 flex-1 relative z-10 custom-scrollbar">
+          <form id="publish-form" onSubmit={handleSubmit} className="flex flex-col lg:grid lg:grid-cols-2 gap-12">
 
-            {/* Left Column: Basic Info */}
-            <div className="flex-1 space-y-5">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">1</span>
-                Script Details
-              </h3>
+            {/* Step 1: Core Configuration */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-xs font-black text-emerald-400 shadow-inner">01</div>
+                <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Base Identity</h3>
+              </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Title</label>
-                  <input required name="title" value={formData.title} onChange={handleChange} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 focus:outline-none" placeholder="Script Name" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Game</label>
-                  <input required name="gameName" value={formData.gameName} onChange={handleChange} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 focus:outline-none" placeholder="Roblox Game Name" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Description</label>
-                  <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 focus:outline-none h-24 resize-none" placeholder="What does this script do?" />
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Script_Identifier</label>
+                  <input required name="title" value={formData.title} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 focus:outline-none transition-all placeholder:text-slate-600 font-bold" placeholder="E.g., Silent Aim V3" />
                 </div>
 
-                {/* Image File Upload */}
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Thumbnail Image</label>
-                  <div className="relative group">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      id="script-image-upload"
-                    />
-                    <label
-                      htmlFor="script-image-upload"
-                      className={`w-full flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-all ${imagePreview
-                        ? 'border-indigo-500 bg-indigo-500/10'
-                        : 'border-slate-700 bg-slate-950 hover:border-indigo-500 hover:bg-slate-900'
-                        }`}
-                    >
-                      {imagePreview ? (
-                        <div className="relative w-full h-32">
-                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                            <span className="text-white text-xs font-bold">Change Image</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <ImageIcon className="w-8 h-8 text-slate-500 mb-2 group-hover:text-indigo-400" />
-                          <span className="text-sm text-slate-400 group-hover:text-white">Click to upload thumbnail</span>
-                        </>
-                      )}
-                    </label>
-                  </div>
+                <div className="space-y-2">
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Target_Environment</label>
+                  <input required name="gameName" value={formData.gameName} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 focus:outline-none transition-all placeholder:text-slate-600 font-bold" placeholder="E.g., BedWars" />
                 </div>
 
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-3 p-3 bg-slate-950 border border-slate-700 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors flex-1">
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.keySystem ? 'bg-indigo-600 border-indigo-600' : 'border-slate-500'}`}>
-                      {formData.keySystem && <Key size={12} className="text-white" />}
+                <div className="space-y-2">
+                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Functional_Documentation</label>
+                  <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 focus:outline-none h-32 resize-none transition-all placeholder:text-slate-600 font-medium leading-relaxed" placeholder="Summarize internal logic & features..." />
+                </div>
+
+                {/* Aesthetic Toggles */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="relative flex items-center gap-3 p-4 rounded-2xl bg-slate-950/40 border border-slate-800 hover:border-emerald-500/30 transition-all cursor-pointer group">
+                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.keySystem ? 'bg-emerald-500 border-emerald-500 rotate-0' : 'border-slate-700 bg-slate-900 rotate-45 group-hover:rotate-0'}`}>
+                      {formData.keySystem && <CheckCircle2 size={14} className="text-slate-950" strokeWidth={3} />}
                     </div>
                     <input
                       type="checkbox"
@@ -362,14 +344,15 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                       onChange={(e) => setFormData({ ...formData, keySystem: e.target.checked })}
                     />
                     <div>
-                      <span className="block text-sm font-medium text-white">Requires Key System?</span>
+                      <span className="block text-sm font-bold text-slate-200">Key System</span>
+                      <span className="text-[10px] text-slate-500 font-mono uppercase">Monetization_Active</span>
                     </div>
                   </label>
 
                   {isAdmin && (
-                    <label className="flex items-center gap-3 p-3 bg-indigo-900/20 border border-indigo-500/30 rounded-lg cursor-pointer hover:border-indigo-500 transition-colors flex-1">
-                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${formData.isOfficial ? 'bg-indigo-500 border-indigo-500' : 'border-indigo-500/50'}`}>
-                        {formData.isOfficial && <Key size={12} className="text-white" />}
+                    <label className="relative flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer group">
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.isOfficial ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'border-emerald-500/30 bg-slate-900'}`}>
+                        {formData.isOfficial && <Sparkles size={14} className="text-slate-950" strokeWidth={3} />}
                       </div>
                       <input
                         type="checkbox"
@@ -378,123 +361,158 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                         onChange={(e) => setFormData({ ...formData, isOfficial: e.target.checked })}
                       />
                       <div>
-                        <span className="block text-sm font-bold text-indigo-400">Official SlenderHub Script?</span>
+                        <span className="block text-sm font-black text-emerald-400">Official Hub</span>
+                        <span className="text-[10px] text-emerald-600/70 font-mono uppercase">Verified_Status</span>
                       </div>
                     </label>
                   )}
                 </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1.5 uppercase">Raw Script URL (Source)</label>
-                  <div className="relative">
-                    <LinkIcon className="absolute left-3 top-3.5 text-slate-500" size={16} />
-                    <input
-                      type="url"
-                      name="rawLink"
-                      value={formData.rawLink}
-                      onChange={handleChange}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-indigo-300 font-mono text-sm focus:border-indigo-500 focus:outline-none"
-                      placeholder="Optional if Monetization Link is provided..."
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-1">Leave empty if you only want to provide the Monetization Link below.</p>
-                </div>
               </div>
             </div>
 
-            {/* Right Column: Tasks/Actions */}
-            <div className="flex-1 space-y-6">
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">2</span>
-                Unlock Actions
-              </h3>
-
-              {/* Action Builder */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
-                <div className="text-sm text-slate-300 font-medium mb-2">Add a required step:</div>
-
-                {/* Action Buttons Grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button type="button" onClick={() => setActiveTaskType('youtube_subscribe')} className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-500/50 hover:bg-red-500/10 transition-all text-slate-300 hover:text-red-400 text-sm font-medium">
-                    <Youtube size={16} /> Subscribe
-                  </button>
-                  <button type="button" onClick={() => setActiveTaskType('youtube_like')} className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-red-500/50 hover:bg-red-500/10 transition-all text-slate-300 hover:text-red-400 text-sm font-medium">
-                    <Youtube size={16} /> Like Video
-                  </button>
-                  <button type="button" onClick={() => setActiveTaskType('discord_join')} className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-all text-slate-300 hover:text-indigo-400 text-sm font-medium">
-                    <MessageCircle size={16} /> Join Discord
-                  </button>
-                  <button type="button" onClick={() => setActiveTaskType('visit_url')} className="flex items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-lg hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all text-slate-300 hover:text-emerald-400 text-sm font-medium">
-                    <Globe size={16} /> Visit URL
-                  </button>
+            {/* Step 2: Content & Visuals */}
+            <div className="space-y-10">
+              {/* Image Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-xs font-black text-emerald-400 shadow-inner">02</div>
+                  <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Visual Assets</h3>
                 </div>
 
-                {/* Input for Selected Action */}
-                {activeTaskType && (
-                  <div className="animate-fade-in mt-4 p-4 bg-slate-900 rounded-lg border border-slate-700">
-                    <label className="block text-xs font-medium text-slate-400 mb-2 uppercase">
-                      Target URL for {activeTaskType.replace('_', ' ')}
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        autoFocus
-                        type="url"
-                        value={tempTaskUrl}
-                        onChange={(e) => setTempTaskUrl(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
-                        placeholder="https://..."
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddTask}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md text-sm font-bold"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Tasks List (Preview) */}
-              <div className="space-y-3">
-                <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Preview Unlock Steps</div>
-                {tasks.length === 0 ? (
-                  <div className="text-center py-8 border border-dashed border-slate-800 rounded-xl text-slate-600 text-sm">
-                    No actions added yet.
-                  </div>
-                ) : (
-                  tasks.map((task, index) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 bg-slate-900 border border-slate-800 rounded-lg group">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-md text-white ${getTaskColor(task.type).split(' ')[0]}`}>
-                          {getTaskIcon(task.type)}
-                        </div>
-                        <div className="text-sm text-slate-300">
-                          <span className="font-medium text-white mr-2">{index + 1}.</span>
-                          {task.text}
+                <div className="relative group">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="script-image-upload"
+                  />
+                  <label
+                    htmlFor="script-image-upload"
+                    className={`w-full h-48 flex flex-col items-center justify-center border-2 border-dashed rounded-[2rem] cursor-pointer transition-all overflow-hidden relative ${imagePreview
+                      ? 'border-emerald-500/50 bg-slate-950/50'
+                      : 'border-slate-800 bg-slate-950/30 hover:border-emerald-500/50 hover:bg-slate-950/50'
+                      }`}
+                  >
+                    {imagePreview ? (
+                      <div className="relative w-full h-full group">
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                          <div className="p-3 bg-emerald-500 rounded-full text-slate-950 shadow-xl scale-90 group-hover:scale-100 transition-transform">
+                            <Plus size={20} strokeWidth={3} />
+                          </div>
+                          <span className="text-xs font-black text-white uppercase tracking-wider">Replace Assets</span>
                         </div>
                       </div>
-                      <button type="button" onClick={() => removeTask(task.id)} className="text-slate-600 hover:text-red-400 p-2">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))
-                )}
-
-                {/* Optional Monetization at the end */}
-                <div className="pt-4 border-t border-slate-800/50 mt-4">
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase flex items-center gap-2">
-                    <LinkIcon size={12} /> Monetization / Download Link
+                    ) : (
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="p-5 bg-slate-900 rounded-3xl border border-slate-800 text-slate-500 shadow-inner group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition-all">
+                          <ImageIcon size={32} />
+                        </div>
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Initialize_Thumbnail_Protocol</span>
+                      </div>
+                    )}
                   </label>
-                  <input
-                    name="shortenerLink"
-                    value={formData.shortenerLink}
-                    onChange={handleChange}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
-                    placeholder="e.g., Linkvertise, LootLabs, or direct MediaFire..."
-                  />
-                  <p className="text-[10px] text-slate-500 mt-1">If filled, users will be directed here after tasks. If empty, the Raw Code is shown.</p>
+                </div>
+              </div>
+
+              {/* Unlock Steps / Tasks */}
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-xs font-black text-emerald-400 shadow-inner">03</div>
+                    <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Unlock Sequence</h3>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500 uppercase">{tasks.length} SECURE_STEPS</span>
+                </div>
+
+                <div className="p-6 rounded-[2rem] bg-slate-950/50 border border-slate-800/80 space-y-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { type: 'youtube_subscribe', label: 'YouTube Sub', icon: Youtube },
+                      { type: 'youtube_like', label: 'YouTube Like', icon: Youtube },
+                      { type: 'discord_join', label: 'Discord Join', icon: MessageCircle },
+                      { type: 'visit_url', label: 'External URL', icon: Globe },
+                    ].map((btn) => (
+                      <button
+                        key={btn.type}
+                        type="button"
+                        onClick={() => setActiveTaskType(btn.type as TaskType)}
+                        className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all text-xs font-bold uppercase tracking-tight ${activeTaskType === btn.type ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-emerald-500/50 hover:text-slate-200'}`}
+                      >
+                        <btn.icon size={16} /> {btn.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeTaskType && (
+                    <div className="p-5 bg-slate-900 rounded-2xl border border-emerald-500/20 animate-in fade-in slide-in-from-top-4 duration-300">
+                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Target_Endpoint_URI</label>
+                      <div className="flex gap-2">
+                        <input
+                          autoFocus
+                          type="url"
+                          value={tempTaskUrl}
+                          onChange={(e) => setTempTaskUrl(e.target.value)}
+                          className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 font-medium"
+                          placeholder="https://scripthub.net/endpoint"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddTask}
+                          className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-black uppercase transition-all shadow-lg shadow-emerald-500/20"
+                        >
+                          Push
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {tasks.map((task, index) => (
+                      <div key={task.id} className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-2xl hover:border-slate-700 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className={`p-2.5 rounded-xl ${getTaskColor(task.type)} border`}>
+                            {getTaskIcon(task.type)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-white leading-tight">{task.text}</p>
+                            <p className="text-[10px] text-slate-500 truncate max-w-[150px] sm:max-w-none font-mono mt-0.5">{task.url}</p>
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => removeTask(task.id)} className="p-2.5 text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-800/60">
+                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <LinkIcon size={14} className="text-emerald-500" /> Source_Code_Endpoint
+                    </label>
+                    <input
+                      required={!formData.shortenerLink}
+                      name="rawLink"
+                      value={formData.rawLink}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-emerald-400 font-bold text-sm focus:border-emerald-500/50 focus:outline-none transition-all placeholder:text-slate-700"
+                      placeholder="loadstring(game:HttpGet('...'))()"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <ExternalLink size={14} className="text-slate-500" /> Monetization_Redirect
+                    </label>
+                    <input
+                      name="shortenerLink"
+                      value={formData.shortenerLink}
+                      onChange={handleChange}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-slate-300 font-medium text-sm focus:border-indigo-500/50 focus:outline-none transition-all placeholder:text-slate-700"
+                      placeholder="e.g., LootLabs, Linkvertise..."
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -503,23 +521,39 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-800 flex justify-end gap-3 bg-slate-900">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 text-slate-400 hover:text-white font-medium transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            disabled={isSubmitting}
-            type="submit"
-            form="publish-form"
-            className="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (scriptToEdit ? 'Update Link' : 'Create Link')}
-            {!isSubmitting && <ArrowRight size={18} />}
-          </button>
+        <div className="px-10 py-8 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-900/60 relative z-10">
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono tracking-widest uppercase items-center order-2 sm:order-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            Direct_Deployment_Secure
+          </div>
+
+          <div className="flex items-center gap-4 w-full sm:w-auto order-1 sm:order-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-8 py-4 text-sm font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest"
+            >
+              Abort
+            </button>
+            <button
+              disabled={isSubmitting}
+              type="submit"
+              form="publish-form"
+              className="flex-1 sm:flex-none px-12 py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 font-black rounded-2xl shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/30 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  INITIALIZING
+                </>
+              ) : (
+                <>
+                  {scriptToEdit ? 'SYNC CHANGES' : 'DEPLOY SCRIPT'}
+                  <ArrowRight size={20} strokeWidth={3} />
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
       </div>

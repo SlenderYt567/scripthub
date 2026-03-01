@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Youtube, MessageCircle, Link as LinkIcon, Lock, CheckCircle, Copy, Code, Globe, ArrowRight, ExternalLink, Terminal, ShieldAlert, ChevronRight } from 'lucide-react';
+import { X, Youtube, MessageCircle, Link as LinkIcon, Lock, CheckCircle, Copy, Code, Globe, ArrowRight, ExternalLink, Terminal, ShieldAlert, ChevronRight, Loader2, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { Script, Task, TaskType } from '../types';
 
 interface GatewayModalProps {
@@ -94,30 +94,30 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
   const getTaskIcon = (type: TaskType) => {
     switch (type) {
       case 'youtube_subscribe':
-      case 'youtube_like': return <Youtube size={16} />;
-      case 'discord_join': return <MessageCircle size={16} />;
-      case 'visit_url': return <Globe size={16} />;
+      case 'youtube_like': return <Youtube size={18} />;
+      case 'discord_join': return <MessageCircle size={18} />;
+      case 'visit_url': return <Globe size={18} />;
     }
   };
 
   const getTaskColorClass = (type: TaskType, isCompleted: boolean) => {
-    if (isCompleted) return 'bg-emerald-950/20 border-emerald-500/50 text-emerald-400';
+    if (isCompleted) return 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
     switch (type) {
       case 'youtube_subscribe':
-      case 'youtube_like': return 'hover:border-red-500 hover:text-red-400';
-      case 'discord_join': return 'hover:border-indigo-500 hover:text-indigo-400';
-      case 'visit_url': return 'hover:border-emerald-500 hover:text-emerald-400';
+      case 'youtube_like': return 'hover:border-rose-500/50 hover:bg-rose-500/5 hover:text-rose-400';
+      case 'discord_join': return 'hover:border-indigo-500/50 hover:bg-indigo-500/5 hover:text-indigo-400';
+      case 'visit_url': return 'hover:border-emerald-500/50 hover:bg-emerald-500/5 hover:text-emerald-400';
     }
     return '';
   };
 
   const getTaskLabel = (task: Task) => {
     switch (task.type) {
-      case 'youtube_subscribe': return 'CONFIRM_SUBSCRIPTION';
-      case 'youtube_like': return 'VERIFY_LIKE';
-      case 'discord_join': return 'JOIN_SERVER';
-      case 'visit_url': return 'PING_WEBSITE';
-      default: return task.text?.toUpperCase() || 'COMPLETE_STEP';
+      case 'youtube_subscribe': return 'SYNC_SUBSCRIPTION';
+      case 'youtube_like': return 'VERIFY_INTERACTION';
+      case 'discord_join': return 'CONNECT_IDENTITY';
+      case 'visit_url': return 'LINK_DECRYPTION';
+      default: return task.text?.toUpperCase() || 'INITIALIZE_STEP';
     }
   };
 
@@ -125,14 +125,20 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
     switch (step) {
       case GatewayStep.TASKS:
         return (
-          <div className="space-y-4">
-            <div className="bg-slate-950 p-4 border border-slate-800 font-mono text-xs">
-              <div className="text-slate-500 mb-2"># SECURITY_CHECK</div>
-              <div className="text-emerald-500 mb-1">&gt; INITIATING HANDSHAKE...</div>
-              <div className="text-slate-400">&gt; PENDING VERIFICATION OF {script.tasks.length} PROTOCOLS</div>
+          <div className="space-y-6 animate-fade-in">
+            <div className="rounded-2xl bg-slate-950/50 border border-slate-800/80 p-5 font-mono text-xs relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-2 opacity-20">
+                <Terminal size={40} className="text-emerald-500" />
+              </div>
+              <div className="text-slate-500 mb-2 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                CORE_GATEWAY_HANDSHAKE
+              </div>
+              <div className="text-emerald-400 font-bold mb-1">&gt; STATUS: {completedTaskIds.size === script.tasks.length ? 'AUTHORIZED' : 'PENDING_VALIDATION'}</div>
+              <div className="text-slate-400">&gt; CLEARANCE: {completedTaskIds.size}/{script.tasks.length} PROTOCOLS_RESOLVED</div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {script.tasks.map((task, index) => {
                 const isCompleted = completedTaskIds.has(task.id);
                 const isLoading = loadingTask === task.id;
@@ -142,92 +148,121 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
                     key={task.id}
                     onClick={() => handleTaskClick(task)}
                     disabled={isCompleted || isLoading}
-                    className={`w-full flex items-center justify-between p-4 border border-slate-700 bg-slate-900 hover:bg-slate-800 transition-all group ${getTaskColorClass(task.type, isCompleted)}`}
+                    className={`w-full flex items-center justify-between p-5 rounded-[1.25rem] border border-slate-800/60 bg-slate-900/40 hover:bg-slate-800/60 transition-all duration-300 group relative overflow-hidden ${getTaskColorClass(task.type, isCompleted)} shadow-lg shadow-black/20`}
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="font-mono text-xs text-slate-600">0{index + 1}</div>
-                      {isLoading ? (
-                        <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent animate-spin"></div>
-                      ) : (
-                        <div className={`transition-colors`}>
-                          {getTaskIcon(task.type)}
-                        </div>
-                      )}
-                      <span className="font-mono text-xs tracking-wider uppercase">{getTaskLabel(task)}</span>
+                    <div className="flex items-center gap-4 relative z-10">
+                      <div className="w-8 h-8 rounded-lg bg-slate-950/50 border border-slate-800 flex items-center justify-center text-[10px] font-black font-mono text-slate-500 group-hover:border-current transition-colors">
+                        0{index + 1}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {isLoading ? (
+                          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent animate-spin rounded-full"></div>
+                        ) : (
+                          <div className="transition-transform group-hover:scale-110 duration-300">
+                            {getTaskIcon(task.type)}
+                          </div>
+                        )}
+                        <span className="font-sans font-black text-sm tracking-tight uppercase">{getTaskLabel(task)}</span>
+                      </div>
                     </div>
 
-                    {isCompleted ? (
-                      <div className="flex items-center gap-2 text-emerald-500 text-[10px] font-mono uppercase">
-                        <span>VERIFIED</span>
-                        <CheckCircle size={14} />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-slate-600 group-hover:text-slate-400 text-[10px] font-mono uppercase">
-                        <span>LOCKED</span>
-                        <Lock size={14} />
-                      </div>
-                    )}
+                    <div className="relative z-10">
+                      {isCompleted ? (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase">
+                          <CheckCircle size={14} />
+                          <span>SYNCED</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-950/50 text-slate-500 group-hover:text-slate-300 transition-colors border border-slate-800 text-[10px] font-black uppercase">
+                          <Lock size={14} />
+                          <span>LOCKED</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hover Glow */}
+                    <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono border-t border-slate-800 pt-2">
-              <span>SECURE_CONNECTION: TLS_1.3</span>
-              <span>PROGRESS: {completedTaskIds.size}/{script.tasks.length}</span>
+            <div className="flex items-center justify-center gap-4 text-[10px] text-slate-600 font-mono py-2 border-t border-slate-800/50">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck size={12} className="text-emerald-500" /> AES_256_ACTIVE
+              </div>
+              <div className="w-1 h-1 rounded-full bg-slate-700"></div>
+              <div className="flex items-center gap-1.5">
+                <Zap size={12} className="text-amber-500" /> BYPASS_PREVENTION
+              </div>
             </div>
           </div>
         );
 
       case GatewayStep.MONETIZATION:
         return (
-          <div className="space-y-6 text-center animate-fade-in py-4">
-            <div className="w-16 h-16 bg-slate-800 border-2 border-slate-700 mx-auto flex items-center justify-center">
-              <ShieldAlert size={32} className="text-amber-500" />
+          <div className="space-y-8 text-center animate-fade-in py-6">
+            <div className="relative mx-auto w-24 h-24">
+              <div className="absolute inset-0 bg-amber-500/20 blur-[30px] rounded-full animate-pulse"></div>
+              <div className="relative w-24 h-24 rounded-3xl bg-slate-900 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-2xl">
+                <ShieldAlert size={48} strokeWidth={1.5} />
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-xl font-bold text-white font-mono uppercase tracking-widest">External_Redirect</h3>
-              <p className="text-slate-400 text-xs font-mono mt-2 max-w-xs mx-auto">
-                &gt; PROTOCOL REQUIRES THIRD-PARTY VERIFICATION.<br />
-                &gt; REDIRECTING TO SECURE SHORTENER...
+            <div className="space-y-3">
+              <h3 className="text-3xl font-black text-white tracking-tight uppercase">External Link</h3>
+              <p className="text-slate-400 text-sm font-medium max-w-[280px] mx-auto leading-relaxed">
+                Clearance granted. Redirecting to final destination for retrieval.
               </p>
             </div>
 
             <button
               onClick={handleShortenerClick}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold font-mono uppercase tracking-wider transition-all hover:translate-x-1 flex items-center justify-center gap-2"
+              className="w-full py-5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-black rounded-2xl tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-4 group shadow-xl shadow-amber-500/10 hover:shadow-amber-500/30"
             >
-              PROCEED_TO_DESTINATION
-              <ChevronRight size={18} />
+              INITIALIZE REDIRECT
+              <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
             </button>
+
+            <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
+              Bypassing unauthorized access controls...
+            </div>
           </div>
         );
 
       case GatewayStep.RESULT:
-        if (!script.rawLink) return <div className="text-center text-slate-500 font-mono">ERROR: NO_SOURCE_FOUND</div>;
+        if (!script.rawLink) return <div className="text-center text-rose-500 font-black py-10 uppercase tracking-widest">ERROR: NO_SOURCE_FOUND</div>;
 
         return (
-          <div className="space-y-5 animate-fade-in">
-            <div className="bg-emerald-950/20 border border-emerald-500/30 p-4 flex items-center gap-4">
-              <Terminal size={24} className="text-emerald-500" />
+          <div className="space-y-6 animate-fade-in">
+            <div className="rounded-[2rem] bg-emerald-500/10 border border-emerald-500/20 p-6 flex items-center gap-5 backdrop-blur-md">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                <Code size={32} strokeWidth={2.5} />
+              </div>
               <div>
-                <h3 className="text-lg font-bold text-emerald-400 font-mono uppercase tracking-widest">Access_Granted</h3>
-                <p className="text-emerald-600/70 text-[10px] font-mono">DECRYPTION SUCCESSFUL</p>
+                <h3 className="text-xl font-black text-emerald-400 uppercase tracking-tight">Access Granted</h3>
+                <p className="text-emerald-600/70 text-xs font-mono font-bold">DECRYPTION SUCCESSFUL_V4</p>
+              </div>
+              <div className="ml-auto opacity-20">
+                <Sparkles size={24} className="text-emerald-500" />
               </div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 p-0 relative group">
-              <div className="flex items-center justify-between bg-slate-900 p-2 border-b border-slate-800">
-                <span className="text-[10px] text-slate-500 font-mono uppercase">source_code.lua</span>
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-rose-500/50"></div>
-                  <div className="w-2 h-2 rounded-full bg-amber-500/50"></div>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500/50"></div>
+            <div className="rounded-[2.5rem] bg-slate-950/80 border border-slate-800/60 overflow-hidden relative group shadow-2xl">
+              <div className="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-white/[0.03]">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500/20 border border-rose-500/40"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20 border border-amber-500/40"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/40"></div>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-2">source.lua</span>
                 </div>
+                <Terminal size={12} className="text-slate-700" />
               </div>
-              <div className="p-4">
-                <code className="block text-indigo-300 font-mono text-sm break-all leading-relaxed">
+              <div className="p-8 max-h-48 overflow-y-auto custom-scrollbar">
+                <code className="block text-emerald-400 font-mono text-sm break-all leading-relaxed font-bold">
                   {generatedCode}
                 </code>
               </div>
@@ -235,13 +270,22 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
 
             <button
               onClick={copyToClipboard}
-              className={`w-full py-4 font-bold font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-2 border ${copied
-                  ? 'bg-emerald-600 text-slate-950 border-emerald-500'
-                  : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-600'
+              className={`w-full py-6 rounded-[2rem] font-black uppercase tracking-[0.15em] transition-all duration-500 flex items-center justify-center gap-4 text-sm shadow-xl ${copied
+                ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/30'
+                : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 shadow-black/20'
                 }`}
             >
-              {copied ? 'COPIED_TO_CLIPBOARD' : 'COPY_TO_CLIPBOARD'}
-              {!copied && <Copy size={16} />}
+              {copied ? (
+                <>
+                  <CheckCircle size={20} strokeWidth={3} />
+                  COPIED_RETRIVEL_KEY
+                </>
+              ) : (
+                <>
+                  <Copy size={20} strokeWidth={2.5} />
+                  RETRIEVE MODULE DATA
+                </>
+              )}
             </button>
           </div>
         );
@@ -249,33 +293,48 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-950/95 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-500"
         onClick={onClose}
       >
-        <div className="absolute inset-0 bg-[linear-gradient(transparent_2px,rgba(0,0,0,0.5)_2px)] bg-[length:100%_4px] opacity-20 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-indigo-500/10 opacity-30 pointer-events-none"></div>
       </div>
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-slate-900 border border-slate-700 shadow-2xl animate-fade-in-up flex flex-col">
+      <div className="relative w-full max-w-lg bg-slate-900/80 border border-slate-800/80 rounded-[3rem] shadow-2xl animate-fade-in-up flex flex-col overflow-hidden backdrop-blur-3xl group">
+
+        {/* Decorative corner accents */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[50px] rounded-full group-hover:bg-emerald-500/10 transition-all duration-1000"></div>
+
         {/* Title Bar */}
-        <div className="flex items-center justify-between p-3 border-b border-slate-800 bg-slate-950">
-          <div className="flex items-center gap-2 text-slate-400">
-            <ShieldAlert size={14} />
-            <span className="text-xs font-mono uppercase tracking-widest">GATEWAY_PROTOCOL_V2</span>
+        <div className="flex items-center justify-between px-8 py-5 border-b border-white/[0.03] bg-white/[0.02]">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <ShieldCheck size={14} strokeWidth={2.5} />
+            </div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gateway_Terminal_v4.0</span>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-rose-500 transition-colors"
+            className="p-2 rounded-xl text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-8 md:p-10 flex-1">
           {renderStepContent()}
+        </div>
+
+        {/* Dynamic Footer Info */}
+        <div className="px-8 py-4 bg-slate-950/40 border-t border-white/[0.03] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+            <span className="text-[8px] font-black text-slate-600 uppercase font-mono tracking-widest">EncryptedSession_Active</span>
+          </div>
+          <span className="text-[8px] font-black text-slate-700 uppercase font-mono tracking-widest">ID: {script.id.substring(0, 8)}</span>
         </div>
       </div>
     </div>

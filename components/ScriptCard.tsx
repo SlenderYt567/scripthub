@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Gamepad2, ChevronRight, User, Key, LockOpen, Hash, Copy } from 'lucide-react';
+import { Eye, Gamepad2, ChevronRight, User, Key, LockOpen, Hash, Copy, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { Script } from '../types';
 
 interface ScriptCardProps {
@@ -20,96 +20,88 @@ const ScriptCard: React.FC<ScriptCardProps> = ({ script, onClick, onAuthorClick 
   return (
     <div
       onClick={() => onClick(script)}
-      className="group cursor-pointer relative flex flex-col bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all duration-300 h-full overflow-hidden"
+      className="group cursor-pointer relative flex flex-col bg-slate-900/40 backdrop-blur-md border border-slate-800/60 hover:border-emerald-500/40 transition-all duration-500 h-full overflow-hidden rounded-[2rem] shadow-2xl hover:-translate-y-1.5"
     >
-
-      {/* Decorative Corner */}
-      <div className="absolute top-0 left-0 w-2 h-2 bg-emerald-500/50 opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
-
-      {/* Thumbnail Section */}
-      <div className="relative h-44 w-full overflow-hidden bg-slate-900 border-b border-slate-800">
-        <div className="absolute inset-0 bg-slate-950/30 z-10 group-hover:bg-transparent transition-colors duration-500" />
+      {/* Visual Header / Thumbnail */}
+      <div className="relative h-48 w-full overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent z-10" />
 
         <img
           src={script.imageUrl}
           alt={script.title}
-          className="w-full h-full object-cover filter grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000"
           onError={(e) => {
             (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${script.id}/400/200`;
           }}
         />
 
-        {/* Scanlines */}
-        <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:100%_4px] pointer-events-none opacity-20 z-10"></div>
+        {/* Global Glow */}
+        <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700 z-10" />
 
-        {/* Game Tag - Top Left */}
-        <div className="absolute top-0 left-0 z-20 p-2">
-          <div className="bg-black/70 backdrop-blur-sm border border-slate-700 px-2 py-1 flex items-center gap-1.5 text-[10px] font-mono uppercase text-emerald-400">
-            <Gamepad2 size={10} />
-            <span className="truncate max-w-[120px]">{script.gameName}</span>
+        {/* Action Badge - Top Left */}
+        <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+          <div className="bg-slate-950/80 backdrop-blur-md border border-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-400 shadow-xl">
+            <Gamepad2 size={14} strokeWidth={2.5} />
+            <span className="truncate max-w-[100px]">{script.gameName}</span>
           </div>
+
+          {script.isOfficial && (
+            <div className="w-fit bg-emerald-500 text-slate-950 px-3 py-1.5 rounded-xl flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              <ShieldCheck size={12} strokeWidth={3} />
+              Verified
+            </div>
+          )}
         </div>
 
-        {/* Key System Badge - Top Right */}
-        <div className="absolute top-0 right-0 z-20 p-2">
+        {/* Access Badge - Top Right */}
+        <div className="absolute top-4 right-4 z-20">
           {script.keySystem ? (
-            <div className="bg-amber-950/80 border border-amber-500/50 px-2 py-1 flex items-center gap-1.5 text-[10px] font-mono uppercase text-amber-400">
-              <Key size={10} />
-              <span>KEY_REQ</span>
+            <div className="bg-amber-500/10 backdrop-blur-md border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-amber-500 shadow-xl">
+              <Key size={14} strokeWidth={2.5} />
+              <span>Key Required</span>
             </div>
           ) : (
-            <div className="bg-emerald-950/80 border border-emerald-500/50 px-2 py-1 flex items-center gap-1.5 text-[10px] font-mono uppercase text-emerald-400">
-              <LockOpen size={10} />
-              <span>FREE</span>
+            <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 shadow-xl">
+              <LockOpen size={14} strokeWidth={2.5} />
+              <span>Universal</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex flex-col flex-1 p-4 relative">
-        {/* Grid Background */}
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '8px 8px' }}></div>
-
-        {script.isOfficial && (
-          <div className="absolute -top-3 left-4 px-2 py-0.5 bg-emerald-600 text-[10px] font-bold text-slate-900 tracking-wider uppercase shadow-lg">
-            Official_Verified
-          </div>
-        )}
-
-        <h3 className="text-base font-bold text-slate-100 line-clamp-2 leading-snug group-hover:text-emerald-400 transition-colors mb-3 mt-1 font-sans tracking-tight">
-          {script.title}
-        </h3>
-
-        <div className="mt-auto space-y-3 pt-3 border-t border-slate-800/50">
-
-          {/* Metadata Row */}
-          <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
-            <div
-              className="flex items-center gap-1 hover:text-emerald-400 transition-colors"
-              onClick={handleAuthorClick}
-            >
-              <User size={12} />
-              <span className="uppercase">{script.author}</span>
+      {/* Content Area */}
+      <div className="flex flex-col flex-1 p-6 relative z-10">
+        <div className="mb-4">
+          <h3 className="text-xl font-black text-white line-clamp-2 leading-tight group-hover:text-emerald-400 transition-colors font-sans tracking-tight">
+            {script.title}
+          </h3>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+              <Zap size={10} className="text-amber-500" /> High Performance
             </div>
+          </div>
+        </div>
 
-            <div className="flex items-center gap-1">
-              <Eye size={12} />
-              <span>{typeof (script.views) === 'number' ? script.views.toLocaleString() : '0'}</span>
+        {/* Footer Meta */}
+        <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/[0.03]">
+          <div
+            className="flex items-center gap-3 hover:bg-white/[0.05] p-2 -m-2 rounded-2xl transition-all group/author"
+            onClick={handleAuthorClick}
+          >
+            <div className="relative w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden group-hover/author:border-emerald-500/50 transition-colors">
+              <User size={16} className="text-slate-400 group-hover/author:text-emerald-400 transition-colors" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Developer</span>
+              <span className="text-xs font-black text-slate-200 group-hover/author:text-emerald-400 transition-colors leading-none">{script.author}</span>
             </div>
           </div>
 
-          {/* Action Row */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1 text-[10px] text-slate-600 font-mono">
-              <Hash size={10} />
-              <span className="truncate w-16">ID_{script.id.slice(0, 6)}</span>
-            </div>
-
-            <button className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 border border-slate-700 hover:border-emerald-500 text-xs text-slate-300 hover:text-emerald-400 font-mono transition-all group/btn">
-              <span>VIEW_SOURCE</span>
-              <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
-            </button>
+          <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/[0.02] border border-white/[0.03] shadow-inner">
+            <Eye size={14} className="text-slate-500 group-hover:text-emerald-500 transition-colors" />
+            <span className="text-xs font-black text-slate-300 group-hover:text-emerald-400 transition-colors tabular-nums">
+              {typeof (script.views) === 'number' ? script.views.toLocaleString() : '0'}
+            </span>
           </div>
         </div>
       </div>

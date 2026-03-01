@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ScriptCard from './components/ScriptCard';
 import PublishModal from './components/PublishModal';
 import GatewayModal from './components/GatewayModal';
-import ExecutorCard from './components/ExecutorCard';
 import ExecutorsView from './components/ExecutorsView';
 import ScriptDetails from './components/ScriptDetails';
 import AdminDashboard from './components/AdminDashboard';
@@ -12,25 +10,42 @@ import AuthModal from './components/AuthModal';
 import ProfileView from './components/ProfileView';
 import SettingsView from './components/SettingsView';
 import AboutView from './components/AboutView';
-import { Script, Executor } from './types';
-import { Layers, Loader2, TrendingUp, Flame } from 'lucide-react';
-import { supabase } from './lib/supabase';
+import { Script } from './types';
+import { Layers, Loader2, TrendingUp, Flame, Sparkles } from 'lucide-react';
+import { useScripts } from './hooks/useScripts';
+import { useAuth } from './hooks/useAuth';
+import { useExecutors } from './hooks/useExecutors';
 
 const App: React.FC = () => {
-  const [scripts, setScripts] = useState<Script[]>([]);
-  const [executors, setExecutors] = useState<Executor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    scripts,
+    setScripts,
+    loading: scriptsLoading,
+    searchQuery,
+    setSearchQuery,
+    filteredScripts,
+    trendingScripts,
+    featuredScripts,
+    refreshScripts
+  } = useScripts();
+
+  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { executors, setExecutors, loading: executorsLoading, refreshExecutors } = useExecutors();
+
+  const loading = scriptsLoading || authLoading || executorsLoading;
 
   // Navigation State
   const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub'>('scripts');
 
-  // Auth State
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // Modal & Selection States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const [isGatewayOpen, setIsGatewayOpen] = useState(false);
+  const [selectedScript, setSelectedScript] = useState<Script | null>(null);
+  const [scriptToEdit, setScriptToEdit] = useState<Script | null>(null);
+  const [viewProfileAuthor, setViewProfileAuthor] = useState('');
 
-  // Sync state to URL - defined before useEffect to avoid TDZ if used there, though currently just called from events
+  // Sync state to URL 
   const updateURL = (view: string, id?: string) => {
     try {
       const url = new URL(window.location.href);
@@ -88,143 +103,11 @@ const App: React.FC = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [scripts.length > 0, isAdmin]); // Only re-run when scripts are actually loaded or admin changes
+  }, [scripts.length > 0, isAdmin]);
 
-  // Modal & Selection States
-  const [isPublishOpen, setIsPublishOpen] = useState(false);
-  const [isGatewayOpen, setIsGatewayOpen] = useState(false);
-  const [selectedScript, setSelectedScript] = useState<Script | null>(null);
-  const [scriptToEdit, setScriptToEdit] = useState<Script | null>(null);
-  const [viewProfileAuthor, setViewProfileAuthor] = useState('');
-
-  // 1. Initial Data Load & Auth Check
-  useEffect(() => {
-    fetchData();
-    checkUser();
-
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user || null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        checkAdminStatus(currentUser.email);
-      } else {
-        setIsAdmin(false);
-        if (currentView === 'admin' || currentView === 'settings') setCurrentView('scripts');
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    if (user?.email) {
-      checkAdminStatus(user.email);
-    }
-  };
-
-  const checkAdminStatus = async (email: string | undefined) => {
-    if (!email) return;
-
-    try {
-      const { data } = await supabase
-        .from('admin_users')
-        .select('role')
-        .ilike('email', email)
-        .maybeSingle();
-
-      if (data) {
-        setIsAdmin(true);
-      }
-    } catch (error) {
-      console.error("Admin check failed:", error);
-
-    }
-  };
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // Fetch Scripts
-      const { data: scriptsData } = await supabase
-        .from('scripts')
-        .select(`*, tasks (*)`)
-        .order('created_at', { ascending: false });
-
-      if (scriptsData) {
-        const mappedScripts: Script[] = scriptsData.map((s: any) => ({
-          id: s.id,
-          title: s.title,
-          gameName: s.game_name,
-          description: s.description,
-          imageUrl: s.image_url,
-          author: s.author,
-          views: s.views,
-          rawLink: s.raw_link,
-          shortenerLink: s.shortener_link,
-          verified: s.verified,
-          isOfficial: s.is_official,
-          keySystem: s.key_system || false,
-          createdAt: new Date(s.created_at).getTime(),
-          tasks: s.tasks || []
-        }));
-        setScripts(mappedScripts);
-      }
-
-      // Fetch Executors
-      const { data: execData } = await supabase
-        .from('executors')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (execData) {
-        const mappedExecutors: Executor[] = execData.map((e: any) => ({
-          id: e.id,
-          name: e.name,
-          description: e.description,
-          imageUrl: e.image_url,
-          downloadUrl: e.download_url,
-          status: e.status,
-          platform: e.platform
-        }));
-        setExecutors(mappedExecutors);
-      }
-
-    } catch (err) {
-      console.error('Error loading data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Filter scripts based on search (Title, Game, or Author)
-  const filteredScripts = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    return scripts.filter(script =>
-      script.title.toLowerCase().includes(q) ||
-      script.gameName.toLowerCase().includes(q) ||
-      script.author.toLowerCase().includes(q)
-    ).sort((a, b) => {
-      // Sort by Official first
-      if (a.isOfficial && !b.isOfficial) return -1;
-      if (!a.isOfficial && b.isOfficial) return 1;
-      return 0; // Maintain existing logic (implied create_at since scripts are already sorted by fetch)
-    });
-  }, [scripts, searchQuery]);
-
-  // Trending Scripts (Top 4 by views)
-  const trendingScripts = useMemo(() => {
-    return [...scripts].sort((a, b) => b.views - a.views).slice(0, 4);
-  }, [scripts]);
-
-  const handlePublish = async (newScript: Script) => {
+  const handlePublish = async () => {
     setScriptToEdit(null);
-    await fetchData();
+    await refreshScripts();
   };
 
   const handleEditScript = (script: Script) => {
@@ -275,7 +158,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
 
       <Header
         searchQuery={searchQuery}
@@ -292,86 +175,104 @@ const App: React.FC = () => {
 
         {/* VIEW: SCRIPTS FEED */}
         {currentView === 'scripts' && (
-          <div className="animate-fade-in space-y-10">
-            {/* Banner / Intro */}
-            <div className="border-b border-slate-800 pb-8 mb-8">
-              <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
-                <div>
-                  <h1 className="text-4xl md:text-6xl font-black text-white tracking-widest uppercase font-mono mb-2">
-                    Script<span className="text-stroke text-transparent stroke-emerald-500 text-stroke-1">_Database</span>
-                  </h1>
-                  <p className="text-slate-500 font-mono text-sm max-w-2xl">
-                    &gt; ACCESSING_GLOBAL_REPOSITORY...<br />
-                    &gt; LOADED_MODULES: {scripts.length}
-                  </p>
-                </div>
-                <div className="hidden md:block text-right">
-                  <div className="text-[10px] text-slate-600 font-mono uppercase tracking-widest mb-1">Current_Node</div>
-                  <div className="text-emerald-500 font-bold font-mono">US-EAST-1</div>
-                </div>
-              </div>
-            </div>
+          <div className="animate-fade-in space-y-12">
 
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 size={48} className="animate-spin text-indigo-500" />
-              </div>
-            ) : (
-              <>
-                {/* TRENDING SECTION (Only if no search active) */}
-                {searchQuery === '' && trendingScripts.length > 0 && (
-                  <div className="animate-fade-in-up">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Flame className="text-orange-500" fill="currentColor" />
-                      <h2 className="text-xl font-bold text-white">Trending Now</h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {trendingScripts.map(script => (
-                        <ScriptCard
-                          key={`trending-${script.id}`}
-                          script={script}
-                          onClick={handleScriptClick}
-                          onAuthorClick={handleAuthorClick}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* HER0 & FEATURED VITRINE */}
+            {searchQuery === '' && (
+              <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/50 backdrop-blur-xl p-8 mb-12">
+                {/* Background Glow */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
 
-                {/* ALL SCRIPTS GRID */}
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Layers className="text-indigo-400" />
-                    <h2 className="text-xl font-bold text-white">
-                      {searchQuery ? `Search Results for "${searchQuery}"` : 'Recent Uploads'}
-                    </h2>
-                  </div>
-
-                  {filteredScripts.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredScripts.map((script) => (
-                        <ScriptCard
-                          key={script.id}
-                          script={script}
-                          onClick={handleScriptClick}
-                          onAuthorClick={handleAuthorClick}
-                        />
-                      ))}
+                <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
+                  <div className="w-full md:w-1/3 space-y-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono mb-2">
+                      <Sparkles size={14} /> NOVO LAYOUT V2
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-500 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
-                      <Layers size={48} className="mb-4 opacity-50" />
-                      <p className="text-lg">No scripts found matching "{searchQuery}"</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+                      Find The Ultimate <br />
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-400">
+                        Scripts & Exploits
+                      </span>
+                    </h1>
+                    <p className="text-slate-400 text-sm max-w-sm">
+                      Explore the premier database for Roblox scripts. High performance, keyless options, and verified official releases.
+                    </p>
+                    <div className="pt-4 flex gap-3">
                       <button
-                        onClick={() => setSearchQuery('')}
-                        className="mt-4 text-indigo-400 hover:underline"
-                      >
-                        Clear filters
+                        onClick={() => document.getElementById('browse-scripts')?.scrollIntoView({ behavior: 'smooth' })}
+                        className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition-colors shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                        Browse All
                       </button>
                     </div>
-                  )}
+                  </div>
+
+                  <div className="w-full md:w-2/3">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Flame className="text-orange-500" fill="currentColor" size={20} />
+                      <h2 className="text-lg font-bold text-white tracking-wide uppercase font-mono">Featured Vitrine</h2>
+                    </div>
+
+                    {loading ? (
+                      <div className="h-48 flex items-center justify-center">
+                        <Loader2 className="animate-spin text-emerald-500" size={32} />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {featuredScripts.slice(0, 3).map(script => (
+                          <div key={`featured-${script.id}`} className="transform hover:-translate-y-1 transition-transform duration-300">
+                            <ScriptCard
+                              script={script}
+                              onClick={handleScriptClick}
+                              onAuthorClick={handleAuthorClick}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </>
+              </div>
+            )}
+
+            {/* SEARCH RESULTS OR ALL SCRIPTS */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 size={48} className="animate-spin text-emerald-500" />
+              </div>
+            ) : (
+              <div id="browse-scripts">
+                <div className="flex items-center gap-2 mb-6 border-b border-slate-800 pb-4">
+                  <Layers className={searchQuery ? "text-indigo-400" : "text-emerald-400"} />
+                  <h2 className="text-2xl font-black text-white tracking-tight">
+                    {searchQuery ? `Search Results for "${searchQuery}"` : 'Recent Uploads'}
+                  </h2>
+                </div>
+
+                {filteredScripts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredScripts.map((script) => (
+                      <ScriptCard
+                        key={script.id}
+                        script={script}
+                        onClick={handleScriptClick}
+                        onAuthorClick={handleAuthorClick}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-slate-500 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
+                    <Layers size={48} className="mb-4 opacity-50 text-indigo-400" />
+                    <p className="text-lg font-medium text-slate-400">No scripts found matching "{searchQuery}"</p>
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
+                    >
+                      Clear Search Flags
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -428,22 +329,22 @@ const App: React.FC = () => {
           <div className="container mx-auto px-4 py-8">
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
-                <Flame className="text-indigo-400" size={32} />
-                <h1 className="text-3xl font-bold text-white">SlenderHub Official</h1>
+                <Flame className="text-emerald-400" size={32} />
+                <h1 className="text-3xl font-black text-white tracking-tight">SlenderHub Official</h1>
               </div>
-              <p className="text-slate-400">Verified and official scripts from the SlenderHub team</p>
+              <p className="text-slate-400">Verified and official scripts curated by the SlenderHub team</p>
             </div>
 
             {loading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="animate-spin text-indigo-500" size={40} />
+                <Loader2 className="animate-spin text-emerald-500" size={40} />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {scripts.filter(s => s.isOfficial).length === 0 ? (
-                  <div className="col-span-full text-center py-20">
+                  <div className="col-span-full text-center py-20 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
                     <Layers className="mx-auto text-slate-700 mb-4" size={64} />
-                    <p className="text-slate-500">No official scripts yet</p>
+                    <p className="text-slate-500 font-medium">No official scripts yet</p>
                   </div>
                 ) : (
                   scripts.filter(s => s.isOfficial).map(script => (
@@ -462,10 +363,15 @@ const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900 mt-auto py-8">
-        <div className="container mx-auto px-4 text-center text-slate-500 text-sm">
-          <p>&copy; 2024 Script Hub. All rights reserved.</p>
-          <p className="mt-2 text-xs">Disclaimer: This platform is for educational purposes only.</p>
+      <footer className="border-t border-slate-800 bg-slate-950 mt-auto py-8 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
+        <div className="container mx-auto px-4 flex flex-col items-center text-slate-500 text-sm">
+          <div className="flex items-center gap-2 mb-4 font-black text-xl tracking-tighter text-white">
+            <Layers className="text-emerald-500" size={24} />
+            Slender<span className="text-emerald-500">Hub</span>
+          </div>
+          <p>&copy; {new Date().getFullYear()} Script Hub. All rights reserved.</p>
+          <p className="mt-2 text-xs text-slate-600 max-w-md text-center">Disclaimer: This platform is for educational purposes only. Users are responsible for their own actions.</p>
         </div>
       </footer>
 

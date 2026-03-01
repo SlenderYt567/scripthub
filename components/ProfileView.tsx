@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Script, UserProfile } from '../types';
 import ScriptCard from './ScriptCard';
-import { User, MessageCircle, Youtube, Calendar, Loader2 } from 'lucide-react';
+import { User, MessageCircle, Youtube, Calendar, Loader2, ArrowLeft, Trophy, ExternalLink, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ProfileViewProps {
@@ -46,22 +46,20 @@ const ProfileView: React.FC<ProfileViewProps> = ({ authorName, onScriptClick, on
         }
 
         // 2. Fetch Profile Info (Mocked lookup since we don't have direct linkage in this version easily without user ID)
-        // In a real app, 'scripts' table should have 'author_id'. 
-        // We will try to find a profile where username matches the authorName
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('username', authorName)
           .maybeSingle();
-        
+
         if (profileData) {
-            setProfile(profileData);
+          setProfile(profileData);
         } else {
-            // Partial fallback if no custom profile created yet
-            setProfile({
-                id: 'unknown',
-                username: authorName
-            });
+          // Partial fallback if no custom profile created yet
+          setProfile({
+            id: 'unknown',
+            username: authorName
+          });
         }
 
       } catch (err) {
@@ -76,77 +74,143 @@ const ProfileView: React.FC<ProfileViewProps> = ({ authorName, onScriptClick, on
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="animate-spin text-indigo-500" size={48} />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <User size={24} className="text-emerald-500/50" />
+          </div>
+        </div>
+        <p className="text-slate-500 font-black uppercase text-[10px] tracking-[0.3em] animate-pulse">Syncing User Profile</p>
       </div>
     );
   }
 
+  const totalViews = scripts.reduce((acc, s) => acc + (s.views || 0), 0);
+
   return (
-    <div className="animate-fade-in">
-      <button onClick={onBack} className="text-slate-400 hover:text-white mb-6">
-        &larr; Back to Hub
+    <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <button
+        onClick={onBack}
+        className="group flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 transition-all mb-10 backdrop-blur-md"
+      >
+        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+        <span className="text-xs font-black uppercase tracking-widest">Return to Nexus</span>
       </button>
-      
+
       {/* Profile Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 mb-10 flex flex-col md:flex-row items-center md:items-start gap-8">
-        <div className="w-32 h-32 rounded-full bg-slate-800 border-4 border-indigo-500/20 flex items-center justify-center text-indigo-500 overflow-hidden">
-           {profile?.avatar_url ? (
-               <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
-           ) : (
-               <User size={64} />
-           )}
-        </div>
-        
-        <div className="flex-1 text-center md:text-left space-y-4">
-          <div>
-             <h1 className="text-4xl font-bold text-white mb-1">{profile?.username}</h1>
-             <p className="text-slate-400 text-sm">Script Developer</p>
+      <div className="relative mb-16 px-4">
+        {/* Abstract Background Elements */}
+        <div className="absolute -top-20 -left-10 w-64 h-64 bg-emerald-500/5 blur-[80px] rounded-full"></div>
+        <div className="absolute -bottom-20 -right-10 w-96 h-96 bg-indigo-500/5 blur-[100px] rounded-full"></div>
+
+        <div className="relative glass-premium rounded-[3rem] p-8 md:p-12 flex flex-col md:flex-row items-center md:items-start gap-10 shadow-2xl overflow-hidden group">
+
+          {/* Avatar Section */}
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 bg-emerald-500/20 blur-[30px] rounded-full transition-opacity group-hover:opacity-40 animate-pulse"></div>
+            <div className="relative w-40 h-40 rounded-[2.5rem] bg-slate-950 border-2 border-emerald-500/20 flex items-center justify-center text-emerald-500 overflow-hidden shadow-2xl group-hover:border-emerald-500/40 transition-all duration-500">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+              ) : (
+                <User size={80} strokeWidth={1} />
+              )}
+            </div>
+
+            {/* Badge */}
+            <div className="absolute -bottom-2 -right-2 p-2 rounded-2xl bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/40 border-4 border-slate-900 group-hover:scale-110 transition-transform">
+              <ShieldCheck size={20} strokeWidth={3} />
+            </div>
           </div>
 
-          <p className="text-slate-300 max-w-2xl">
-            {profile?.bio || "This user hasn't added a bio yet."}
-          </p>
+          {/* Info Section */}
+          <div className="flex-1 text-center md:text-left space-y-6">
+            <div className="space-y-2">
+              <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                <h1 className="text-5xl font-black text-white tracking-tight leading-none">{profile?.username}</h1>
+                <span className="w-fit px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                  Top Developer
+                </span>
+              </div>
+              <div className="flex items-center justify-center md:justify-start gap-2 text-slate-500 font-black text-[10px] uppercase tracking-widest">
+                <Calendar size={12} className="text-emerald-500" /> Active since Q1 2026
+              </div>
+            </div>
 
-          <div className="flex items-center justify-center md:justify-start gap-4 flex-wrap">
-             {profile?.youtube_url && (
-                <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-red-600/10 text-red-500 rounded-lg hover:bg-red-600/20 transition-colors border border-red-600/20">
-                    <Youtube size={18} /> YouTube
+            <p className="text-slate-400 text-lg font-medium max-w-2xl leading-relaxed">
+              {profile?.bio || "This expert developer hasn't disclosed their bio yet. Specialized in advanced exploitation frameworks."}
+            </p>
+
+            <div className="flex items-center justify-center md:justify-start gap-4 flex-wrap pt-2">
+              {profile?.youtube_url && (
+                <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="group/social flex items-center gap-3 px-6 py-3 bg-red-500/5 hover:bg-red-500/10 text-red-500 rounded-2xl transition-all border border-red-500/10 hover:border-red-500/30 font-black uppercase text-xs tracking-widest">
+                  <Youtube size={18} strokeWidth={2.5} /> Dev Channel
                 </a>
-             )}
-             {profile?.discord_url && (
-                <a href={profile.discord_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-indigo-600/10 text-indigo-500 rounded-lg hover:bg-indigo-600/20 transition-colors border border-indigo-600/20">
-                    <MessageCircle size={18} /> Discord
+              )}
+              {profile?.discord_url && (
+                <a href={profile.discord_url} target="_blank" rel="noopener noreferrer" className="group/social flex items-center gap-3 px-6 py-3 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-500 rounded-2xl transition-all border border-indigo-500/10 hover:border-indigo-500/30 font-black uppercase text-xs tracking-widest">
+                  <MessageCircle size={18} strokeWidth={2.5} /> Discord Lab
                 </a>
-             )}
-             <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg text-slate-400 border border-slate-700">
-                <Calendar size={18} /> Joined Recently
-             </div>
+              )}
+            </div>
           </div>
-        </div>
-        
-        <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 min-w-[200px] text-center">
-            <div className="text-3xl font-bold text-white mb-1">{scripts.length}</div>
-            <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Scripts Published</div>
+
+          {/* Stats Section */}
+          <div className="shrink-0 flex flex-col gap-4 min-w-[220px]">
+            <div className="glass-premium bg-emerald-500/5 p-6 rounded-[2rem] border border-emerald-500/10 text-center group/stat hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Zap size={16} className="text-amber-500" />
+                <div className="text-4xl font-black text-white tracking-tighter">{scripts.length}</div>
+              </div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Deployments</div>
+            </div>
+
+            <div className="glass-premium bg-indigo-500/5 p-6 rounded-[2rem] border border-indigo-500/10 text-center group/stat hover:border-indigo-500/30 transition-all">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Trophy size={16} className="text-indigo-500" />
+                <div className="text-3xl font-black text-white tracking-tighter">{totalViews.toLocaleString()}</div>
+              </div>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Social Impact</div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* User Scripts Grid */}
-      <h2 className="text-2xl font-bold text-white mb-6 pl-2 border-l-4 border-indigo-500">
-         Published Scripts
-      </h2>
-      
-      {scripts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="space-y-10">
+        <div className="flex items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-12 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+            <div>
+              <h2 className="text-3xl font-black text-white uppercase tracking-tight">Deployment Vault</h2>
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Authorized Module List</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950/50 border border-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            Filtered by Latest
+          </div>
+        </div>
+
+        {scripts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {scripts.map(script => (
-                <ScriptCard key={script.id} script={script} onClick={onScriptClick} />
+              <div key={script.id} className="animate-fade-in-up">
+                <ScriptCard script={script} onClick={onScriptClick} />
+              </div>
             ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 text-slate-500 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
-            User has not published any scripts yet.
-        </div>
-      )}
+          </div>
+        ) : (
+          <div className="text-center py-24 rounded-[3rem] bg-slate-900/40 border-2 border-dashed border-slate-800 flex flex-col items-center gap-4">
+            <div className="p-4 rounded-3xl bg-slate-950 text-slate-700">
+              <Sparkles size={40} />
+            </div>
+            <div className="space-y-1">
+              <p className="text-slate-500 font-black uppercase text-sm tracking-widest">Vault is Currently Empty</p>
+              <p className="text-slate-600 text-[10px] font-medium uppercase tracking-[0.2em]">Awaiting new module deployments</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

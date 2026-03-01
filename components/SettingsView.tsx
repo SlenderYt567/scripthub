@@ -16,7 +16,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
     discord_url: '',
     avatar_url: ''
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -42,17 +42,17 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
     if (data) {
       setProfile(data);
     } else {
-        // Init profile if doesn't exist (handled via triggers usually, but explicit here for safety)
-        const initialProfile = {
-            id: user.id,
-            username: user.email.split('@')[0],
-            bio: '',
-            youtube_url: '',
-            discord_url: ''
-        };
-        // Attempt to create it silently
-        await supabase.from('profiles').insert([initialProfile]);
-        setProfile(initialProfile);
+      // Init profile if doesn't exist (handled via triggers usually, but explicit here for safety)
+      const initialProfile = {
+        id: user.id,
+        username: user.email.split('@')[0],
+        bio: '',
+        youtube_url: '',
+        discord_url: ''
+      };
+      // Attempt to create it silently
+      await supabase.from('profiles').insert([initialProfile]);
+      setProfile(initialProfile);
     }
     setLoading(false);
   };
@@ -75,7 +75,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
       });
 
     if (error) {
-      setMessage('Error saving profile.');
+      setMessage('Error updating registry.');
       console.error(error);
     } else {
       setMessage('Profile updated successfully!');
@@ -87,143 +87,173 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 6) {
-      setPasswordMessage('Password must be at least 6 characters.');
+      setPasswordMessage('Access key must be at least 6 characters.');
       return;
     }
-    
+
     setPasswordLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
-    
+
     if (error) {
-      setPasswordMessage('Error updating password.');
+      setPasswordMessage('Error updating access key.');
     } else {
-      setPasswordMessage('Password updated successfully!');
+      setPasswordMessage('Access key updated successfully!');
       setNewPassword('');
     }
     setPasswordLoading(false);
   };
 
-  if (loading) return <div className="p-10 text-center"><Loader2 className="animate-spin mx-auto text-indigo-500" /></div>;
+  if (loading) return (
+    <div className="p-20 text-center flex flex-col items-center gap-6 opacity-50">
+      <Loader2 className="animate-spin text-indigo-500 w-12 h-12" />
+      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Decrypting User Config...</span>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto animate-fade-in space-y-8">
-      <h1 className="text-3xl font-bold text-white mb-6">Account Settings</h1>
+    <div className="max-w-5xl mx-auto animate-fade-in space-y-12 pb-20">
+      <div className="flex items-center gap-6 px-4">
+        <div className="w-1.5 h-12 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
+        <div>
+          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Client_Config</h1>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 block px-1">Manage global identity and security</span>
+        </div>
+      </div>
 
       {/* Profile Section */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-8">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <User className="text-indigo-500" /> Public Profile
+      <div className="glass-premium border border-white/[0.05] rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden group">
+        <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full group-hover:bg-indigo-500/10 transition-all duration-1000"></div>
+
+        <h2 className="text-2xl font-black text-white mb-10 flex items-center gap-4 relative z-10">
+          <User className="text-indigo-500" strokeWidth={2.5} /> Identity_Matrix
         </h2>
 
-        <form onSubmit={handleProfileUpdate} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">Display Name</label>
-              <input 
-                type="text" 
+        <form onSubmit={handleProfileUpdate} className="space-y-10 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Authorized Codename</label>
+              <input
+                type="text"
                 value={profile.username}
-                onChange={(e) => setProfile({...profile, username: e.target.value})}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none" 
+                onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                className="w-full bg-black/20 border border-white/[0.05] px-6 py-4 rounded-2xl text-white focus:outline-none focus:border-indigo-500/40 focus:bg-black/40 transition-all font-medium"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">Avatar URL (Image Link)</label>
-              <div className="relative">
-                  <ImageIcon className="absolute left-3 top-3.5 text-slate-500" size={16} />
-                  <input 
-                    type="url" 
-                    value={profile.avatar_url || ''}
-                    onChange={(e) => setProfile({...profile, avatar_url: e.target.value})}
-                    placeholder="https://imgur.com/..."
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-white focus:border-indigo-500 outline-none" 
-                  />
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Avatar Identifier (URL)</label>
+              <div className="relative group/input">
+                <div className="absolute left-6 top-0 bottom-0 flex items-center pointer-events-none">
+                  <ImageIcon className="text-slate-600 group-focus-within/input:text-indigo-500 transition-colors" size={16} />
+                </div>
+                <input
+                  type="url"
+                  value={profile.avatar_url || ''}
+                  onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })}
+                  placeholder="https://assets.nexus..."
+                  className="w-full bg-black/20 border border-white/[0.05] pl-16 pr-6 py-4 rounded-2xl text-white focus:outline-none focus:border-indigo-500/40 focus:bg-black/40 transition-all font-medium"
+                />
               </div>
             </div>
           </div>
 
-          <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">Bio / About Me</label>
-              <textarea 
-                value={profile.bio || ''}
-                onChange={(e) => setProfile({...profile, bio: e.target.value})}
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none h-24 resize-none" 
-                placeholder="Tell the community about yourself..."
-              />
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Identity Briefing (Bio)</label>
+            <textarea
+              value={profile.bio || ''}
+              onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+              className="w-full bg-black/20 border border-white/[0.05] px-6 py-4 rounded-2xl text-white focus:outline-none focus:border-indigo-500/40 focus:bg-black/40 transition-all h-32 resize-none font-medium"
+              placeholder="Declare your affiliation..."
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">YouTube Channel</label>
-                <div className="relative">
-                    <Youtube className="absolute left-3 top-3.5 text-slate-500" size={16} />
-                    <input 
-                        type="url" 
-                        value={profile.youtube_url || ''}
-                        onChange={(e) => setProfile({...profile, youtube_url: e.target.value})}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-white focus:border-indigo-500 outline-none" 
-                        placeholder="https://youtube.com/@..."
-                    />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Comm_Link YouTube</label>
+              <div className="relative group/input">
+                <div className="absolute left-6 top-0 bottom-0 flex items-center pointer-events-none">
+                  <Youtube className="text-slate-600 group-focus-within/input:text-rose-500 transition-colors" size={16} />
                 </div>
-             </div>
-             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">Discord Invite</label>
-                <div className="relative">
-                    <MessageCircle className="absolute left-3 top-3.5 text-slate-500" size={16} />
-                    <input 
-                        type="url" 
-                        value={profile.discord_url || ''}
-                        onChange={(e) => setProfile({...profile, discord_url: e.target.value})}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-3 py-3 text-white focus:border-indigo-500 outline-none" 
-                        placeholder="https://discord.gg/..."
-                    />
+                <input
+                  type="url"
+                  value={profile.youtube_url || ''}
+                  onChange={(e) => setProfile({ ...profile, youtube_url: e.target.value })}
+                  className="w-full bg-black/20 border border-white/[0.05] pl-16 pr-6 py-4 rounded-2xl text-white focus:outline-none focus:border-indigo-500/40 focus:bg-black/40 transition-all font-medium"
+                  placeholder="https://youtube.com/@..."
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Comm_Link Discord</label>
+              <div className="relative group/input">
+                <div className="absolute left-6 top-0 bottom-0 flex items-center pointer-events-none">
+                  <MessageCircle className="text-slate-600 group-focus-within/input:text-indigo-400 transition-colors" size={16} />
                 </div>
-             </div>
+                <input
+                  type="url"
+                  value={profile.discord_url || ''}
+                  onChange={(e) => setProfile({ ...profile, discord_url: e.target.value })}
+                  className="w-full bg-black/20 border border-white/[0.05] pl-16 pr-6 py-4 rounded-2xl text-white focus:outline-none focus:border-indigo-500/40 focus:bg-black/40 transition-all font-medium"
+                  placeholder="https://discord.gg/..."
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-             <span className={`text-sm font-medium ${message.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
-                {message}
-             </span>
-             <button 
-               type="submit" 
-               disabled={saving}
-               className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg transition-colors flex items-center gap-2"
-             >
-                {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                Save Profile
-             </button>
+          <div className="flex items-center justify-between pt-10 border-t border-white/[0.05]">
+            <span className={`text-[10px] font-black uppercase tracking-widest ${message.includes('Error') ? 'text-rose-400' : 'text-emerald-400'}`}>
+              {message}
+            </span>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-indigo-500/20 flex items-center gap-3 active:scale-95 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle size={18} strokeWidth={2.5} />}
+              Override Config
+            </button>
           </div>
         </form>
       </div>
 
       {/* Security Section */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-8">
-        <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <Lock className="text-indigo-500" /> Security
+      <div className="glass-premium border border-white/[0.05] rounded-[3rem] p-10 md:p-14 shadow-2xl relative overflow-hidden group">
+        <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-rose-500/5 blur-[100px] rounded-full group-hover:bg-rose-500/10 transition-all duration-1000"></div>
+
+        <h2 className="text-2xl font-black text-white mb-10 flex items-center gap-4 relative z-10">
+          <Lock className="text-rose-500" strokeWidth={2.5} /> Security_Protocol
         </h2>
-        <form onSubmit={handlePasswordChange} className="max-w-md">
-            <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">New Password</label>
-                <input 
-                    type="password" 
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Min. 6 characters"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-indigo-500 outline-none" 
-                />
+
+        <form onSubmit={handlePasswordChange} className="max-w-xl relative z-10 space-y-8">
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">New Access Key</label>
+            <div className="relative group/input">
+              <div className="absolute left-6 top-0 bottom-0 flex items-center pointer-events-none">
+                <Lock className="text-slate-600 group-focus-within/input:text-rose-500 transition-colors" size={16} />
+              </div>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Identification token (Min. 6 chars)"
+                className="w-full bg-black/20 border border-white/[0.05] pl-16 pr-6 py-4 rounded-2xl text-white focus:outline-none focus:border-rose-500/40 focus:bg-black/40 transition-all font-medium"
+              />
             </div>
-            <button 
-               type="submit" 
-               disabled={passwordLoading || !newPassword}
-               className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-             >
-                {passwordLoading ? <Loader2 className="animate-spin" size={18} /> : 'Update Password'}
-             </button>
-             {passwordMessage && (
-                 <p className={`mt-3 text-sm ${passwordMessage.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
-                     {passwordMessage}
-                 </p>
-             )}
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <button
+              type="submit"
+              disabled={passwordLoading || !newPassword}
+              className="w-full md:w-auto px-10 py-4 bg-white/5 border border-white/5 hover:border-rose-500/40 text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95 disabled:opacity-50"
+            >
+              {passwordLoading ? <Loader2 className="animate-spin" size={18} /> : 'Update Access Token'}
+            </button>
+            {passwordMessage && (
+              <p className={`text-[10px] font-black uppercase tracking-widest ${passwordMessage.includes('Error') ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {passwordMessage}
+              </p>
+            )}
+          </div>
         </form>
       </div>
 
