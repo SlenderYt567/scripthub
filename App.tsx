@@ -10,6 +10,7 @@ import AuthModal from './components/AuthModal';
 import ProfileView from './components/ProfileView';
 import SettingsView from './components/SettingsView';
 import AboutView from './components/AboutView';
+import SlenderHubView from './components/SlenderHubView';
 import { Script } from './types';
 import { Layers, Loader2, TrendingUp, Flame, Sparkles } from 'lucide-react';
 import { useScripts } from './hooks/useScripts';
@@ -45,10 +46,32 @@ const App: React.FC = () => {
   const [scriptToEdit, setScriptToEdit] = useState<Script | null>(null);
   const [viewProfileAuthor, setViewProfileAuthor] = useState('');
 
-  // Sync state to URL 
+  // --- Hash URL Sanitizer ---
+  // If the URL contains a hash-based route (e.g. /#/view or /#view),
+  // strip it and redirect to clean URL without page reload.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#')) {
+      const cleanHash = hash.replace(/^#\/?/, '');
+      const url = new URL(window.location.href);
+      url.hash = '';
+      if (cleanHash && cleanHash !== '/') {
+        // Try to parse hash as a view name
+        const [hashView] = cleanHash.split('?');
+        const validViews = ['scripts', 'executors', 'admin', 'profile', 'settings', 'about', 'slenderhub'];
+        if (validViews.includes(hashView)) {
+          url.searchParams.set('view', hashView);
+        }
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
+
+  // Sync state to URL
   const updateURL = (view: string, id?: string) => {
     try {
       const url = new URL(window.location.href);
+      url.hash = ''; // always strip any hash
       url.searchParams.delete('view');
       url.searchParams.delete('id');
 
@@ -63,6 +86,7 @@ const App: React.FC = () => {
       console.error('URL update failed', e);
     }
   };
+
 
   // URL Parameter Handling
   useEffect(() => {
@@ -158,7 +182,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-black text-zinc-200 font-sans selection:bg-white/10 selection:text-white">
 
       <Header
         searchQuery={searchQuery}
@@ -179,38 +203,37 @@ const App: React.FC = () => {
 
             {/* HER0 & FEATURED VITRINE */}
             {searchQuery === '' && (
-              <div className="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/50 backdrop-blur-xl p-8 mb-12">
+              <div className="relative rounded-[2.5rem] overflow-hidden border border-white/5 bg-white/[0.02] backdrop-blur-3xl p-10 mb-12">
                 {/* Background Glow */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none translate-y-1/2 -translate-x-1/2"></div>
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/[0.03] rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                  <div className="w-full md:w-1/3 space-y-4">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono mb-2">
-                      <Sparkles size={14} /> NOVO LAYOUT V2
+                <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-center">
+                  <div className="w-full lg:w-1/2 space-y-6">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-medium tracking-wide">
+                      <Sparkles size={14} /> NEW INFRASTRUCTURE
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-                      Find The Ultimate <br />
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-indigo-400">
-                        Scripts & Exploits
+                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold text-white tracking-tighter leading-[1.1]">
+                      Deploy Secure <br />
+                      <span className="text-zinc-500">
+                        Scripts & Hubs
                       </span>
                     </h1>
-                    <p className="text-slate-400 text-sm max-w-sm">
-                      Explore the premier database for Roblox scripts. High performance, keyless options, and verified official releases.
+                    <p className="text-zinc-400 text-lg max-w-md font-medium">
+                      The premier database for execution tools. High performance, keyless infrastructure, and verified releases.
                     </p>
-                    <div className="pt-4 flex gap-3">
+                    <div className="pt-4 flex gap-4">
                       <button
                         onClick={() => document.getElementById('browse-scripts')?.scrollIntoView({ behavior: 'smooth' })}
-                        className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg transition-colors shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                        Browse All
+                        className="px-8 py-3.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                        Explore Directory
                       </button>
                     </div>
                   </div>
 
-                  <div className="w-full md:w-2/3">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Flame className="text-orange-500" fill="currentColor" size={20} />
-                      <h2 className="text-lg font-bold text-white tracking-wide uppercase font-mono">Featured Vitrine</h2>
+                  <div className="w-full lg:w-1/2">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Layers className="text-zinc-400" size={20} />
+                      <h2 className="text-sm font-semibold text-zinc-400 tracking-[0.2em] uppercase">Featured Vitrine</h2>
                     </div>
 
                     {loading ? (
@@ -242,11 +265,11 @@ const App: React.FC = () => {
               </div>
             ) : (
               <div id="browse-scripts">
-                <div className="flex items-center gap-2 mb-6 border-b border-slate-800 pb-4">
-                  <Layers className={searchQuery ? "text-indigo-400" : "text-emerald-400"} />
-                  <h2 className="text-2xl font-black text-white tracking-tight">
+                <div className="flex items-center gap-3 mb-8 pb-4">
+                  <h2 className="text-2xl font-semibold text-white tracking-tight">
                     {searchQuery ? `Search Results for "${searchQuery}"` : 'Recent Uploads'}
                   </h2>
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
                 </div>
 
                 {filteredScripts.length > 0 ? (
@@ -326,49 +349,18 @@ const App: React.FC = () => {
 
         {/* VIEW: SLENDERHUB (Official Scripts Only) */}
         {currentView === 'slenderhub' && (
-          <div className="container mx-auto px-4 py-8">
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-2">
-                <Flame className="text-emerald-400" size={32} />
-                <h1 className="text-3xl font-black text-white tracking-tight">SlenderHub Official</h1>
-              </div>
-              <p className="text-slate-400">Verified and official scripts curated by the SlenderHub team</p>
-            </div>
-
-            {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="animate-spin text-emerald-500" size={40} />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {scripts.filter(s => s.isOfficial).length === 0 ? (
-                  <div className="col-span-full text-center py-20 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
-                    <Layers className="mx-auto text-slate-700 mb-4" size={64} />
-                    <p className="text-slate-500 font-medium">No official scripts yet</p>
-                  </div>
-                ) : (
-                  scripts.filter(s => s.isOfficial).map(script => (
-                    <ScriptCard
-                      key={script.id}
-                      script={script}
-                      onClick={() => handleScriptClick(script)}
-                    />
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+          <SlenderHubView />
         )}
 
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-950 mt-auto py-8 relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
-        <div className="container mx-auto px-4 flex flex-col items-center text-slate-500 text-sm">
-          <div className="flex items-center gap-2 mb-4 font-black text-xl tracking-tighter text-white">
-            <Layers className="text-emerald-500" size={24} />
-            Slender<span className="text-emerald-500">Hub</span>
+      <footer className="border-t border-white/5 bg-black mt-auto py-12 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+        <div className="container mx-auto px-4 flex flex-col items-center text-zinc-500 text-sm">
+          <div className="flex items-center gap-2 mb-6 font-semibold text-xl tracking-tight text-white">
+            <Layers className="text-white" size={24} />
+            SlenderHub
           </div>
           <p>&copy; {new Date().getFullYear()} Script Hub. All rights reserved.</p>
           <p className="mt-2 text-xs text-slate-600 max-w-md text-center">Disclaimer: This platform is for educational purposes only. Users are responsible for their own actions.</p>

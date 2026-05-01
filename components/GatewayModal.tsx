@@ -278,7 +278,7 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
               {copied ? (
                 <>
                   <CheckCircle size={20} strokeWidth={3} />
-                  COPIED_RETRIVEL_KEY
+                  COPIED — READY TO PASTE
                 </>
               ) : (
                 <>
@@ -314,7 +314,7 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
             <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               <ShieldCheck size={14} strokeWidth={2.5} />
             </div>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gateway_Terminal_v4.0</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gateway Terminal v4.0</span>
           </div>
           <button
             onClick={onClose}
@@ -332,7 +332,7 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
         <div className="px-8 py-4 bg-slate-950/40 border-t border-white/[0.03] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-            <span className="text-[8px] font-black text-slate-600 uppercase font-mono tracking-widest">EncryptedSession_Active</span>
+            <span className="text-[8px] font-black text-slate-600 uppercase font-mono tracking-widest">Encrypted Session Active</span>
           </div>
           <span className="text-[8px] font-black text-slate-700 uppercase font-mono tracking-widest">ID: {script.id.substring(0, 8)}</span>
         </div>

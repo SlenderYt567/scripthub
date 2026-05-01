@@ -18,7 +18,7 @@ const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
                         <ArrowLeft size={20} strokeWidth={2.5} />
                     </button>
                     <div>
-                        <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Genesis_Protocol</h1>
+                        <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Platform Origin</h1>
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 block px-1">About the Nexus Platform</span>
                     </div>
                 </div>

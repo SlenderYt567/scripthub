@@ -121,7 +121,7 @@ const EditExecutorModal: React.FC<EditExecutorModalProps> = ({ isOpen, onClose, 
                     <div className="flex items-center gap-4">
                         <div className="w-1.5 h-10 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
                         <div>
-                            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Mod_Module_Config</h2>
+                            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Module Config</h2>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Authorized Modification Protocol</span>
                             </div>
@@ -190,7 +190,7 @@ const EditExecutorModal: React.FC<EditExecutorModalProps> = ({ isOpen, onClose, 
                                                     <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm opacity-0 group-hover/asset:opacity-100 transition-opacity">
                                                         <div className="flex flex-col items-center gap-2 text-white px-4 py-2 rounded-2xl bg-black/40 border border-white/10">
                                                             <ImageIcon size={24} />
-                                                            <span className="text-[10px] font-black uppercase tracking-widest">Swap_Asset</span>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">Swap Asset</span>
                                                         </div>
                                                     </div>
                                                 </>
@@ -214,7 +214,7 @@ const EditExecutorModal: React.FC<EditExecutorModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 <div className="px-10 py-8 border-t border-white/[0.05] flex justify-end gap-4 bg-black/20 backdrop-blur-md relative z-10">
-                    <button type="button" onClick={onClose} className="px-8 py-4 text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all">Abort_Changes</button>
+                    <button type="button" onClick={onClose} className="px-8 py-4 text-[10px] font-black text-slate-500 hover:text-white uppercase tracking-widest transition-all">Abort Changes</button>
                     <button type="submit" form="edit-executor-form" disabled={isSubmitting} className="px-10 py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center gap-3 disabled:opacity-50 active:scale-95">
                         {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : (
                             <>

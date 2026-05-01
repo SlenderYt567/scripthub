@@ -13,6 +13,7 @@ interface PublishModalProps {
 
 const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish, isAdmin = false, scriptToEdit = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserEmail, setCurrentUserEmail] = useState('Guest');
 
   // Form State
@@ -66,8 +67,11 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
       }
 
       supabase.auth.getUser().then(({ data }) => {
-        if (data.user?.email) {
-          setCurrentUserEmail(data.user.email.split('@')[0]);
+        if (data.user) {
+          setCurrentUser(data.user);
+          if (data.user.email) {
+            setCurrentUserEmail(data.user.email.split('@')[0]);
+          }
         }
       });
     } else {
@@ -158,12 +162,13 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
       // 2. Insert or Update Script
       let scriptData, scriptError;
 
-      const payload = {
+      const payload: any = {
         title: formData.title,
         game_name: formData.gameName,
         description: formData.description,
         image_url: publicUrl,
         author: scriptToEdit ? scriptToEdit.author : currentUserEmail,
+        author_id: scriptToEdit ? scriptToEdit.author_id : (currentUser?.id || null),
         raw_link: formData.rawLink || null,
         shortener_link: formData.shortenerLink || null,
         verified: scriptToEdit ? scriptToEdit.verified : (isAdmin ? true : false),
@@ -277,23 +282,19 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
         onClick={onClose}
       ></div>
 
-      <div className="relative w-full max-w-5xl bg-slate-900/90 border border-slate-800/80 rounded-[2.5rem] shadow-2xl backdrop-blur-3xl flex flex-col max-h-[92vh] overflow-hidden animate-fade-in-up">
-
-        {/* Dynamic Background Effects */}
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none"></div>
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/5 blur-[100px] rounded-full pointer-events-none"></div>
+      <div className="relative w-full max-w-5xl bg-zinc-950/90 border border-white/10 rounded-[2rem] shadow-2xl backdrop-blur-3xl flex flex-col max-h-[92vh] overflow-hidden animate-fade-in-up">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-800/60 relative z-10 bg-slate-900/40">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-white/10 relative z-10 bg-white/[0.02]">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <UploadCloud size={24} strokeWidth={2.5} />
+            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white">
+              <UploadCloud size={24} strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-white tracking-tight uppercase">
+              <h2 className="text-2xl font-semibold text-white tracking-tight">
                 {scriptToEdit ? 'Module Configuration' : 'Script Deployment'}
               </h2>
-              <p className="text-xs text-slate-500 font-mono tracking-widest uppercase">System_Protocol_v2.4</p>
+              <p className="text-sm text-zinc-500 font-medium tracking-wide">System Protocol v2.4</p>
             </div>
           </div>
           <button
@@ -311,31 +312,31 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
             {/* Step 1: Core Configuration */}
             <div className="space-y-8">
               <div className="flex items-center gap-4 mb-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-xs font-black text-emerald-400 shadow-inner">01</div>
-                <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Base Identity</h3>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/5 text-xs font-semibold text-white shadow-inner">01</div>
+                <h3 className="text-sm font-semibold text-white tracking-wide">Base Identity</h3>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Script_Identifier</label>
-                  <input required name="title" value={formData.title} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 focus:outline-none transition-all placeholder:text-slate-600 font-bold" placeholder="E.g., Silent Aim V3" />
+                  <label className="block text-sm font-medium text-zinc-400 ml-1">Script Identifier</label>
+                  <input required name="title" value={formData.title} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-white/30 focus:outline-none transition-all placeholder:text-zinc-600 font-medium" placeholder="E.g., Silent Aim V3" />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Target_Environment</label>
-                  <input required name="gameName" value={formData.gameName} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 focus:outline-none transition-all placeholder:text-slate-600 font-bold" placeholder="E.g., BedWars" />
+                  <label className="block text-sm font-medium text-zinc-400 ml-1">Target Environment</label>
+                  <input required name="gameName" value={formData.gameName} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-white/30 focus:outline-none transition-all placeholder:text-zinc-600 font-medium" placeholder="E.g., BedWars" />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Functional_Documentation</label>
-                  <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-white focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/5 focus:outline-none h-32 resize-none transition-all placeholder:text-slate-600 font-medium leading-relaxed" placeholder="Summarize internal logic & features..." />
+                  <label className="block text-sm font-medium text-zinc-400 ml-1">Functional Documentation</label>
+                  <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-white focus:border-white/30 focus:outline-none h-32 resize-none transition-all placeholder:text-zinc-600 font-medium leading-relaxed" placeholder="Summarize internal logic & features..." />
                 </div>
 
                 {/* Aesthetic Toggles */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <label className="relative flex items-center gap-3 p-4 rounded-2xl bg-slate-950/40 border border-slate-800 hover:border-emerald-500/30 transition-all cursor-pointer group">
-                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.keySystem ? 'bg-emerald-500 border-emerald-500 rotate-0' : 'border-slate-700 bg-slate-900 rotate-45 group-hover:rotate-0'}`}>
-                      {formData.keySystem && <CheckCircle2 size={14} className="text-slate-950" strokeWidth={3} />}
+                  <label className="relative flex items-center gap-3 p-4 rounded-xl bg-black/40 border border-white/10 hover:border-white/30 transition-all cursor-pointer group">
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${formData.keySystem ? 'bg-white border-white text-black' : 'border-zinc-700 bg-black'}`}>
+                      {formData.keySystem && <CheckCircle2 size={14} strokeWidth={3} />}
                     </div>
                     <input
                       type="checkbox"
@@ -344,15 +345,15 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                       onChange={(e) => setFormData({ ...formData, keySystem: e.target.checked })}
                     />
                     <div>
-                      <span className="block text-sm font-bold text-slate-200">Key System</span>
-                      <span className="text-[10px] text-slate-500 font-mono uppercase">Monetization_Active</span>
+                      <span className="block text-sm font-semibold text-white">Key System</span>
+                      <span className="text-xs text-zinc-500 font-medium">Monetization Active</span>
                     </div>
                   </label>
 
                   {isAdmin && (
-                    <label className="relative flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer group">
-                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.isOfficial ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]' : 'border-emerald-500/30 bg-slate-900'}`}>
-                        {formData.isOfficial && <Sparkles size={14} className="text-slate-950" strokeWidth={3} />}
+                    <label className="relative flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 transition-all cursor-pointer group">
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${formData.isOfficial ? 'bg-white border-white text-black' : 'border-zinc-700 bg-black'}`}>
+                        {formData.isOfficial && <Sparkles size={14} strokeWidth={3} />}
                       </div>
                       <input
                         type="checkbox"
@@ -361,8 +362,8 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                         onChange={(e) => setFormData({ ...formData, isOfficial: e.target.checked })}
                       />
                       <div>
-                        <span className="block text-sm font-black text-emerald-400">Official Hub</span>
-                        <span className="text-[10px] text-emerald-600/70 font-mono uppercase">Verified_Status</span>
+                        <span className="block text-sm font-semibold text-white">Official Hub</span>
+                        <span className="text-xs text-zinc-400 font-medium">Verified Status</span>
                       </div>
                     </label>
                   )}
@@ -375,8 +376,8 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
               {/* Image Upload */}
               <div className="space-y-4">
                 <div className="flex items-center gap-4 mb-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-xs font-black text-emerald-400 shadow-inner">02</div>
-                  <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Visual Assets</h3>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/5 text-xs font-semibold text-white shadow-inner">02</div>
+                  <h3 className="text-sm font-semibold text-white tracking-wide">Visual Assets</h3>
                 </div>
 
                 <div className="relative group">
@@ -390,26 +391,26 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                   <label
                     htmlFor="script-image-upload"
                     className={`w-full h-48 flex flex-col items-center justify-center border-2 border-dashed rounded-[2rem] cursor-pointer transition-all overflow-hidden relative ${imagePreview
-                      ? 'border-emerald-500/50 bg-slate-950/50'
-                      : 'border-slate-800 bg-slate-950/30 hover:border-emerald-500/50 hover:bg-slate-950/50'
+                      ? 'border-white/30 bg-black/40'
+                      : 'border-white/10 bg-black/20 hover:border-white/30 hover:bg-black/40'
                       }`}
                   >
                     {imagePreview ? (
                       <div className="relative w-full h-full group">
                         <img src={imagePreview} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                          <div className="p-3 bg-emerald-500 rounded-full text-slate-950 shadow-xl scale-90 group-hover:scale-100 transition-transform">
+                          <div className="p-3 bg-white rounded-full text-black shadow-xl scale-90 group-hover:scale-100 transition-transform">
                             <Plus size={20} strokeWidth={3} />
                           </div>
-                          <span className="text-xs font-black text-white uppercase tracking-wider">Replace Assets</span>
+                          <span className="text-xs font-bold text-white tracking-wide">Replace Assets</span>
                         </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-3">
-                        <div className="p-5 bg-slate-900 rounded-3xl border border-slate-800 text-slate-500 shadow-inner group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition-all">
+                        <div className="p-5 bg-white/5 rounded-3xl border border-white/10 text-zinc-400 shadow-inner group-hover:text-white transition-all">
                           <ImageIcon size={32} />
                         </div>
-                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest group-hover:text-white transition-colors">Initialize_Thumbnail_Protocol</span>
+                        <span className="text-xs font-semibold text-zinc-400 tracking-wide group-hover:text-white transition-colors">Initialize Thumbnail Protocol</span>
                       </div>
                     )}
                   </label>
@@ -420,13 +421,13 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-xs font-black text-emerald-400 shadow-inner">03</div>
-                    <h3 className="text-sm font-black text-slate-200 uppercase tracking-widest">Unlock Sequence</h3>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/5 text-xs font-semibold text-white shadow-inner">03</div>
+                    <h3 className="text-sm font-semibold text-white tracking-wide">Unlock Sequence</h3>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">{tasks.length} SECURE_STEPS</span>
+                  <span className="text-xs font-medium text-zinc-500">{tasks.length} Secure Steps</span>
                 </div>
 
-                <div className="p-6 rounded-[2rem] bg-slate-950/50 border border-slate-800/80 space-y-6">
+                <div className="p-6 rounded-[2rem] bg-black/40 border border-white/10 space-y-6">
                   <div className="grid grid-cols-2 gap-3">
                     {[
                       { type: 'youtube_subscribe', label: 'YouTube Sub', icon: Youtube },
@@ -438,7 +439,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                         key={btn.type}
                         type="button"
                         onClick={() => setActiveTaskType(btn.type as TaskType)}
-                        className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all text-xs font-bold uppercase tracking-tight ${activeTaskType === btn.type ? 'bg-emerald-500 text-slate-950 border-emerald-500' : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-emerald-500/50 hover:text-slate-200'}`}
+                        className={`flex items-center gap-3 p-3.5 rounded-xl transition-all text-xs font-semibold ${activeTaskType === btn.type ? 'bg-white text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}
                       >
                         <btn.icon size={16} /> {btn.label}
                       </button>
@@ -446,21 +447,21 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                   </div>
 
                   {activeTaskType && (
-                    <div className="p-5 bg-slate-900 rounded-2xl border border-emerald-500/20 animate-in fade-in slide-in-from-top-4 duration-300">
-                      <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Target_Endpoint_URI</label>
+                    <div className="p-5 bg-black/40 rounded-2xl border border-white/10 animate-in fade-in duration-300">
+                      <label className="block text-xs font-medium text-zinc-400 tracking-wide mb-3">Target Endpoint URI</label>
                       <div className="flex gap-2">
                         <input
                           autoFocus
                           type="url"
                           value={tempTaskUrl}
                           onChange={(e) => setTempTaskUrl(e.target.value)}
-                          className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500/50 font-medium"
+                          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/30 font-medium"
                           placeholder="https://scripthub.net/endpoint"
                         />
                         <button
                           type="button"
                           onClick={handleAddTask}
-                          className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-sm font-black uppercase transition-all shadow-lg shadow-emerald-500/20"
+                          className="px-6 py-3 bg-white hover:bg-zinc-200 text-black rounded-xl text-sm font-semibold transition-all"
                         >
                           Push
                         </button>
@@ -470,46 +471,46 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
 
                   <div className="space-y-3">
                     {tasks.map((task, index) => (
-                      <div key={task.id} className="flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-2xl hover:border-slate-700 transition-all">
+                      <div key={task.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl hover:border-white/10 transition-all">
                         <div className="flex items-center gap-4">
                           <div className={`p-2.5 rounded-xl ${getTaskColor(task.type)} border`}>
                             {getTaskIcon(task.type)}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-white leading-tight">{task.text}</p>
-                            <p className="text-[10px] text-slate-500 truncate max-w-[150px] sm:max-w-none font-mono mt-0.5">{task.url}</p>
+                            <p className="text-sm font-semibold text-white leading-tight">{task.text}</p>
+                            <p className="text-[10px] text-zinc-500 truncate max-w-[150px] sm:max-w-none mt-0.5">{task.url}</p>
                           </div>
                         </div>
-                        <button type="button" onClick={() => removeTask(task.id)} className="p-2.5 text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all">
+                        <button type="button" onClick={() => removeTask(task.id)} className="p-2.5 text-zinc-500 hover:text-white hover:bg-white/10 rounded-xl transition-all">
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                   </div>
 
-                  <div className="pt-4 border-t border-slate-800/60">
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <LinkIcon size={14} className="text-emerald-500" /> Source_Code_Endpoint
+                  <div className="pt-4 border-t border-white/10">
+                    <label className="block text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
+                      <LinkIcon size={16} className="text-zinc-500" /> Source Code Endpoint
                     </label>
                     <input
                       required={!formData.shortenerLink}
                       name="rawLink"
                       value={formData.rawLink}
                       onChange={handleChange}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-emerald-400 font-bold text-sm focus:border-emerald-500/50 focus:outline-none transition-all placeholder:text-slate-700"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-medium text-sm focus:border-white/30 focus:outline-none transition-all placeholder:text-zinc-600"
                       placeholder="loadstring(game:HttpGet('...'))()"
                     />
                   </div>
 
                   <div className="pt-2">
-                    <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <ExternalLink size={14} className="text-slate-500" /> Monetization_Redirect
+                    <label className="block text-sm font-medium text-zinc-400 mb-2 flex items-center gap-2">
+                      <ExternalLink size={16} className="text-zinc-500" /> Monetization Redirect
                     </label>
                     <input
                       name="shortenerLink"
                       value={formData.shortenerLink}
                       onChange={handleChange}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-slate-300 font-medium text-sm focus:border-indigo-500/50 focus:outline-none transition-all placeholder:text-slate-700"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-medium text-sm focus:border-white/30 focus:outline-none transition-all placeholder:text-zinc-600"
                       placeholder="e.g., LootLabs, Linkvertise..."
                     />
                   </div>
@@ -521,17 +522,17 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
         </div>
 
         {/* Footer */}
-        <div className="px-10 py-8 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-6 bg-slate-900/60 relative z-10">
-          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono tracking-widest uppercase items-center order-2 sm:order-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            Direct_Deployment_Secure
+        <div className="px-10 py-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 bg-white/[0.02] relative z-10">
+          <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium items-center order-2 sm:order-1">
+            <div className="w-2 h-2 rounded-full bg-white"></div>
+            Direct Deployment Secure
           </div>
 
           <div className="flex items-center gap-4 w-full sm:w-auto order-1 sm:order-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-8 py-4 text-sm font-bold text-slate-400 hover:text-white transition-colors uppercase tracking-widest"
+              className="px-6 py-3 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
               Abort
             </button>
@@ -539,17 +540,17 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
               disabled={isSubmitting}
               type="submit"
               form="publish-form"
-              className="flex-1 sm:flex-none px-12 py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 font-black rounded-2xl shadow-xl shadow-emerald-500/10 hover:shadow-emerald-500/30 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50"
+              className="flex-1 sm:flex-none px-8 py-3 bg-white hover:bg-zinc-200 text-black font-semibold rounded-full shadow-lg transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="animate-spin" size={20} />
-                  INITIALIZING
+                  <Loader2 className="animate-spin" size={18} />
+                  Initializing
                 </>
               ) : (
                 <>
-                  {scriptToEdit ? 'SYNC CHANGES' : 'DEPLOY SCRIPT'}
-                  <ArrowRight size={20} strokeWidth={3} />
+                  {scriptToEdit ? 'Sync Changes' : 'Deploy Script'}
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </>
               )}
             </button>

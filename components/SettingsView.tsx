@@ -115,7 +115,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
       <div className="flex items-center gap-6 px-4">
         <div className="w-1.5 h-12 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]"></div>
         <div>
-          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Client_Config</h1>
+          <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Client Config</h1>
           <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-1 block px-1">Manage global identity and security</span>
         </div>
       </div>
@@ -125,7 +125,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full group-hover:bg-indigo-500/10 transition-all duration-1000"></div>
 
         <h2 className="text-2xl font-black text-white mb-10 flex items-center gap-4 relative z-10">
-          <User className="text-indigo-500" strokeWidth={2.5} /> Identity_Matrix
+          <User className="text-indigo-500" strokeWidth={2.5} /> Identity Matrix
         </h2>
 
         <form onSubmit={handleProfileUpdate} className="space-y-10 relative z-10">
@@ -168,7 +168,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div className="space-y-2">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Comm_Link YouTube</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Comm Link YouTube</label>
               <div className="relative group/input">
                 <div className="absolute left-6 top-0 bottom-0 flex items-center pointer-events-none">
                   <Youtube className="text-slate-600 group-focus-within/input:text-rose-500 transition-colors" size={16} />
@@ -183,7 +183,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Comm_Link Discord</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-4">Comm Link Discord</label>
               <div className="relative group/input">
                 <div className="absolute left-6 top-0 bottom-0 flex items-center pointer-events-none">
                   <MessageCircle className="text-slate-600 group-focus-within/input:text-indigo-400 transition-colors" size={16} />
@@ -220,7 +220,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
         <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-rose-500/5 blur-[100px] rounded-full group-hover:bg-rose-500/10 transition-all duration-1000"></div>
 
         <h2 className="text-2xl font-black text-white mb-10 flex items-center gap-4 relative z-10">
-          <Lock className="text-rose-500" strokeWidth={2.5} /> Security_Protocol
+          <Lock className="text-rose-500" strokeWidth={2.5} /> Security Protocol
         </h2>
 
         <form onSubmit={handlePasswordChange} className="max-w-xl relative z-10 space-y-8">

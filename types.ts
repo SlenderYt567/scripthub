@@ -51,3 +51,9 @@ export interface UserProfile {
   youtube_url?: string;
   discord_url?: string;
 }
+
+export interface SupportedGame {
+  id: string;
+  name: string;
+  created_at?: string;
+}

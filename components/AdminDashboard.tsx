@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, FileCode, Cpu, Shield, Trash2, CheckCircle,
-  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil, Database, Terminal, Settings, ShieldAlert, Zap
+  AlertTriangle, Plus, X, Search, ShieldCheck, Download, Loader2, Mail, Image as ImageIcon, Star, ExternalLink, Link, Pencil, Database, Terminal, Settings, ShieldAlert, Zap, Gamepad2
 } from 'lucide-react';
-import { Script, Executor, AdminUser } from '../types';
+import { Script, Executor, AdminUser, SupportedGame } from '../types';
 import { supabase } from '../lib/supabase';
 import EditExecutorModal from './EditExecutorModal';
+import { useSupportedGames } from '../hooks/useSupportedGames';
 
 interface AdminDashboardProps {
   scripts: Script[];
@@ -18,9 +19,14 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   scripts, setScripts, executors, setExecutors, onEditScript
 }) => {
-  const [activeTab, setActiveTab] = useState<'scripts' | 'executors' | 'users'>('scripts');
+  const [activeTab, setActiveTab] = useState<'scripts' | 'executors' | 'users' | 'games'>('scripts');
   const [showAddExecutor, setShowAddExecutor] = useState(false);
   const [executorToEdit, setExecutorToEdit] = useState<Executor | null>(null);
+
+  // Supported Games State
+  const { games, setGames, loading: loadingGames } = useSupportedGames();
+  const [newGameName, setNewGameName] = useState('');
+  const [isAddingGame, setIsAddingGame] = useState(false);
 
   // Admin Users State
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
@@ -242,6 +248,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  const handleAddGame = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGameName.trim()) return;
+    setIsAddingGame(true);
+
+    const { data, error } = await supabase
+      .from('supported_games')
+      .insert([{ name: newGameName.trim() }])
+      .select()
+      .single();
+
+    if (data && !error) {
+      setGames(prev => [...prev, data as SupportedGame].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewGameName('');
+    } else {
+      console.error(error);
+      alert(error?.message || "Error adding game");
+    }
+    setIsAddingGame(false);
+  };
+
+  const handleDeleteGame = async (id: string) => {
+    if (confirm('Remove this supported game?')) {
+      const { error } = await supabase.from('supported_games').delete().eq('id', id);
+      if (!error) {
+        setGames(prev => prev.filter(g => g.id !== id));
+      } else {
+        alert("Action failed: " + error.message);
+      }
+    }
+  };
+
   return (
     <div className="animate-fade-in space-y-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Dashboard Header - Premium High-Control UI */}
@@ -286,7 +324,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 }`}
             >
               <Users size={14} />
-              Access_Grid
+              Access Grid
+            </button>
+            <button
+              onClick={() => setActiveTab('games')}
+              className={`flex items-center gap-3 px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-500 rounded-xl ${activeTab === 'games' ? 'bg-rose-500/10 text-rose-400 shadow-lg shadow-rose-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                }`}
+            >
+              <Gamepad2 size={14} />
+              Games List
             </button>
           </div>
         </div>
@@ -322,10 +368,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-white/[0.03] bg-white/[0.02]">
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Module_Identification</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Platform_Target</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Validation_State</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">System_Controls</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Module Identification</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Platform Target</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Validation State</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] text-right">System Controls</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.02]">
@@ -370,28 +416,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <button
                               onClick={() => toggleVerifyScript(script.id)}
                               className={`p-2.5 rounded-xl border transition-all ${script.verified ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10' : 'bg-white/5 border-white/5 text-slate-500 hover:text-emerald-400 hover:border-emerald-500/40'}`}
-                              title="Shield_Verification"
+                              title="Toggle Verification"
                             >
                               <ShieldCheck size={16} strokeWidth={2.5} />
                             </button>
                             <button
                               onClick={() => toggleOfficialScript(script.id)}
                               className={`p-2.5 rounded-xl border transition-all ${script.isOfficial ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 shadow-lg shadow-indigo-500/10' : 'bg-white/5 border-white/5 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/40'}`}
-                              title="Nexus_Priority"
+                              title="Toggle Official"
                             >
                               <Star size={16} fill={script.isOfficial ? "currentColor" : "none"} strokeWidth={2.5} />
                             </button>
                             <button
                               onClick={() => onEditScript(script)}
                               className="p-2.5 rounded-xl bg-white/5 border border-white/5 text-slate-500 hover:text-white hover:border-white/20 transition-all"
-                              title="Modify_Protocol"
+                              title="Edit Script"
                             >
                               <Pencil size={16} strokeWidth={2.5} />
                             </button>
                             <button
                               onClick={() => deleteScript(script.id)}
                               className="p-2.5 rounded-xl bg-rose-500/5 border border-rose-500/5 text-slate-600 hover:text-rose-400 hover:border-rose-500/40 transition-all"
-                              title="Purge_Sequence"
+                              title="Delete Script"
                             >
                               <Trash2 size={16} strokeWidth={2.5} />
                             </button>
@@ -435,7 +481,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="relative z-10 space-y-8">
                 <div className="flex items-center gap-3 mb-2">
                   <Settings size={18} className="text-emerald-500" />
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Initialize_New_Payload</h3>
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Initialize New Payload</h3>
                 </div>
 
                 <form onSubmit={handleAddExecutor} className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -498,7 +544,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 className="w-full h-full object-cover group-hover/upload:scale-110 transition-transform duration-700"
                               />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/upload:opacity-100 transition-opacity">
-                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest px-4 py-2 rounded-xl bg-black/50 border border-emerald-500/20 backdrop-blur-md">Modify_Asset</span>
+                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest px-4 py-2 rounded-xl bg-black/50 border border-emerald-500/20 backdrop-blur-md">Modify Asset</span>
                               </div>
                             </>
                           ) : (
@@ -605,7 +651,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <div className="space-y-4">
               <div className="flex items-center justify-between px-6 mb-2">
-                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Permission_Matrix</h4>
+                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Permission Matrix</h4>
                 <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest leading-none">Status: Active Repositories</span>
               </div>
 
@@ -638,6 +684,66 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <Trash2 size={18} strokeWidth={2.5} />
                         </button>
                       )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- GAMES TAB --- */}
+      {activeTab === 'games' && (
+        <div className="space-y-8 animate-fade-in">
+          <div className="flex items-center gap-4">
+            <div className="w-1.5 h-12 bg-amber-500 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
+            <div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight">Supported Games</h3>
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Manage SlenderHub supported game list</span>
+            </div>
+          </div>
+
+          <div className="glass-premium rounded-[2.5rem] p-10 border border-white/[0.05] shadow-2xl">
+            <form onSubmit={handleAddGame} className="flex flex-col md:flex-row gap-6 mb-12">
+              <div className="relative flex-1 group">
+                <input
+                  required
+                  value={newGameName}
+                  onChange={(e) => setNewGameName(e.target.value)}
+                  placeholder="Enter new game name (e.g. Blox Fruits)..."
+                  className="w-full bg-black/20 border border-white/[0.05] px-6 py-5 rounded-3xl text-white focus:outline-none focus:border-amber-500/40 focus:bg-black/40 transition-all font-medium"
+                />
+              </div>
+              <button disabled={isAddingGame} type="submit" className="px-10 py-5 bg-amber-600 hover:bg-amber-500 text-white font-black text-xs uppercase tracking-[0.2em] rounded-3xl shadow-xl shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50">
+                {isAddingGame ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} strokeWidth={2.5} />}
+                Add Game
+              </button>
+            </form>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-6 mb-2">
+                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">Game Directory</h4>
+                <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest leading-none">Total: {games.length}</span>
+              </div>
+
+              {loadingGames ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+                  <div className="w-10 h-10 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Loading Games...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {games.map(game => (
+                    <div key={game.id} className="relative group p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-amber-500/30 transition-all flex items-center justify-between overflow-hidden">
+                      <div className="flex items-center gap-3 relative z-10">
+                        <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                        <span className="font-bold text-white tracking-tight">{game.name}</span>
+                      </div>
+                      
+                      <button onClick={() => handleDeleteGame(game.id)} className="relative z-10 p-2 rounded-xl bg-white/5 border border-white/5 text-slate-600 hover:text-rose-500 hover:border-rose-500/30 transition-all active:scale-90 opacity-0 group-hover:opacity-100">
+                        <Trash2 size={14} strokeWidth={2.5} />
+                      </button>
                     </div>
                   ))}
                 </div>

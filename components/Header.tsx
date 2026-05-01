@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Terminal, Code2, Cpu, LogIn, LayoutDashboard, User, LogOut, Settings, ChevronDown, Flame, Menu, X, Sparkles, ShieldCheck, Zap, Bell, Globe } from 'lucide-react';
+import { Search, Plus, Terminal, Code2, Cpu, LogIn, LayoutDashboard, User, LogOut, Settings, ChevronDown, Flame, Menu, X, Sparkles, ShieldCheck, Zap, Bell, Globe, ShoppingBag } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface HeaderProps {
@@ -43,23 +43,20 @@ const Header: React.FC<HeaderProps> = ({
   const navItems = [
     { id: 'scripts', label: 'Index', icon: Code2 },
     { id: 'slenderhub', label: 'SlenderHub', icon: Flame },
-    { id: 'executors', label: 'Modules', icon: Cpu },
+    { id: 'executors', label: 'Executors', icon: Cpu },
     { id: 'about', label: 'Network', icon: Globe },
   ];
 
   return (
-    <header className={`sticky top-0 z-[60] w-full transition-all duration-500 ${scrolled ? 'py-2' : 'py-4'}`}>
+    <header className={`sticky top-0 z-[60] w-full transition-all duration-500 ${scrolled ? 'py-3' : 'py-5'}`}>
       <div className="container mx-auto px-4">
-        <div className={`relative glass-premium rounded-[2rem] border border-white/[0.05] shadow-2xl transition-all duration-500 ${scrolled ? 'bg-slate-950/80 backdrop-blur-2xl' : 'bg-slate-950/40 backdrop-blur-xl'}`}>
+        <div className={`relative glass-premium rounded-2xl border border-white/5 transition-all duration-500 ${scrolled ? 'bg-black/80 backdrop-blur-2xl' : 'bg-black/40 backdrop-blur-xl'}`}>
 
-          {/* Subtle Glow Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-indigo-500/5 rounded-[2rem] pointer-events-none opacity-50"></div>
-
-          <div className="relative h-16 md:h-20 flex items-center justify-between px-6 md:px-10 gap-6">
+          <div className="relative h-14 md:h-16 flex items-center justify-between px-6 md:px-8 gap-6">
 
             {/* Logo Area */}
             <div
-              className="flex items-center gap-4 cursor-pointer group"
+              className="flex items-center gap-3 cursor-pointer group"
               onClick={() => {
                 setCurrentView('scripts');
                 const url = new URL(window.location.href);
@@ -68,43 +65,30 @@ const Header: React.FC<HeaderProps> = ({
                 window.history.pushState({}, '', url.toString());
               }}
             >
-              <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-950 border border-white/[0.05] shadow-2xl group-hover:border-emerald-500/40 transition-all duration-500 overflow-hidden">
-                <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <Terminal size={22} className="text-emerald-400 group-hover:scale-110 transition-transform duration-500 relative z-10" strokeWidth={2.5} />
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 shadow-sm group-hover:border-white/30 transition-all duration-300">
+                <Terminal size={16} className="text-white" strokeWidth={2} />
               </div>
               <div className="hidden sm:flex flex-col justify-center">
-                <span className="text-2xl font-black tracking-tight text-white leading-none">
-                  Script<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">Hub</span>
+                <span className="text-lg font-semibold tracking-tight text-white leading-none">
+                  Slender<span className="text-zinc-500">Hub</span>
                 </span>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <div className="flex gap-0.5">
-                    <div className="w-1 h-3 rounded-full bg-emerald-500/40"></div>
-                    <div className="w-1 h-3 rounded-full bg-emerald-500 animate-pulse transition-all"></div>
-                    <div className="w-1 h-3 rounded-full bg-emerald-500/40"></div>
-                  </div>
-                  <span className="text-[8px] text-slate-500 font-black tracking-[0.2em] uppercase">Status: Optimal</span>
-                </div>
               </div>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/20 border border-white/[0.03] backdrop-blur-md">
+            <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => {
                 const isActive = currentView === item.id || (item.id === 'scripts' && ['details', 'profile'].includes(currentView));
                 return (
                   <button
                     key={item.id}
                     onClick={() => setCurrentView(item.id)}
-                    className={`relative px-5 py-2.5 text-xs font-black uppercase tracking-[0.1em] rounded-xl transition-all duration-500 flex items-center gap-2.5 overflow-hidden group ${isActive
-                      ? 'text-emerald-400 bg-emerald-500/10 shadow-lg shadow-emerald-500/10'
-                      : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'
+                    className={`relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 flex items-center gap-2 ${isActive
+                      ? 'text-white bg-white/10'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                       }`}
                   >
-                    <item.icon size={16} strokeWidth={isActive ? 2.5 : 2} className={`transition-colors duration-500 ${isActive ? 'text-emerald-400' : 'text-slate-600 group-hover:text-slate-400'}`} />
                     {item.label}
-                    {isActive && (
-                      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-emerald-500/40"></div>
-                    )}
                   </button>
                 );
               })}
@@ -123,24 +107,35 @@ const Header: React.FC<HeaderProps> = ({
                   Admin
                 </button>
               )}
+
+              {/* Divider before Store */}
+              <div className="w-px h-6 bg-white/[0.05] mx-1"></div>
+
+              {/* Store Button */}
+              <a
+                href="https://www.slenderhub.shop/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 flex items-center gap-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40"
+              >
+                <ShoppingBag size={15} strokeWidth={2} />
+                Store
+              </a>
             </nav>
 
             {/* Search Bar - Premium Integrated */}
             {['scripts', 'details', 'profile'].includes(currentView) && (
-              <div className="hidden xl:flex flex-1 max-w-[320px] relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <Search size={16} className="text-slate-600 group-focus-within:text-emerald-500 transition-colors" />
+              <div className="hidden xl:flex flex-1 max-w-[280px] relative group">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  <Search size={14} className="text-zinc-500 group-focus-within:text-white transition-colors" />
                 </div>
                 <input
                   type="text"
-                  className="block w-full pl-12 pr-12 py-3 rounded-2xl bg-black/20 border border-white/[0.05] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500/40 focus:bg-black/40 text-xs font-medium tracking-tight transition-all shadow-inner backdrop-blur-md"
-                  placeholder="Query global repository..."
+                  className="block w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/5 text-white placeholder-zinc-500 focus:outline-none focus:border-white/20 focus:bg-white/10 text-sm font-medium transition-all"
+                  placeholder="Search repository..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                  <span className="text-[10px] font-black text-slate-700 border border-white/5 px-2 py-0.5 rounded-lg bg-black/40 uppercase tracking-tighter">Enter</span>
-                </div>
               </div>
             )}
 
@@ -148,19 +143,19 @@ const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-4">
               <button
                 onClick={onOpenPublish}
-                className="hidden md:flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-950 text-xs font-black uppercase tracking-widest rounded-2xl transition-all duration-300 shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:scale-95"
+                className="hidden md:flex items-center justify-center gap-2 px-5 py-2 bg-white hover:bg-zinc-200 text-black text-sm font-semibold rounded-full transition-all duration-300"
               >
-                <Plus size={18} strokeWidth={3} />
+                <Plus size={16} strokeWidth={2.5} />
                 Deploy
               </button>
 
               {!user ? (
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center gap-3 px-6 py-3 rounded-2xl border border-white/[0.05] hover:border-emerald-500/30 bg-white/[0.02] hover:bg-emerald-500/5 text-slate-400 hover:text-emerald-400 text-xs font-black uppercase tracking-widest transition-all duration-300 backdrop-blur-md"
+                  className="flex items-center gap-2 px-5 py-2 rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-all duration-300"
                 >
-                  <LogIn size={18} />
-                  <span>Join</span>
+                  <LogIn size={16} />
+                  <span>Log in</span>
                 </button>
               ) : (
                 <div className="relative">
@@ -236,24 +231,23 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Mobile Navigation Drawer */}
-          <div className={`lg:hidden overflow-hidden transition-all duration-500 ease-in-out ${isMenuOpen ? 'max-h-[500px] border-t border-white/[0.03] opacity-100 py-6' : 'max-h-0 opacity-0'}`}>
-            <div className="flex flex-col px-6 gap-3">
+          <div className={`lg:hidden overflow-hidden transition-all duration-500 ease-in-out ${isMenuOpen ? 'max-h-[500px] border-t border-white/5 opacity-100 py-4' : 'max-h-0 opacity-0'}`}>
+            <div className="flex flex-col px-4 gap-1">
               {navItems.map(item => {
                 const isActive = currentView === item.id || (item.id === 'scripts' && ['details', 'profile'].includes(currentView));
                 return (
                   <button
                     key={item.id}
                     onClick={() => { setCurrentView(item.id); setIsMenuOpen(false); }}
-                    className={`flex items-center justify-between px-6 py-4 rounded-[1.25rem] font-black uppercase text-xs tracking-widest transition-all duration-300 ${isActive
-                      ? 'bg-emerald-500/10 text-emerald-400 shadow-inner'
-                      : 'bg-white/5 text-slate-500 hover:text-slate-200'
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 ${isActive
+                      ? 'bg-white/10 text-white'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                       }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <item.icon size={20} strokeWidth={2.5} className={isActive ? 'text-emerald-400' : 'text-slate-600'} />
+                    <div className="flex items-center gap-3">
+                      <item.icon size={18} strokeWidth={2} className={isActive ? 'text-white' : 'text-zinc-500'} />
                       {item.label}
                     </div>
-                    {isActive && <Zap size={14} className="text-emerald-500 animate-pulse" />}
                   </button>
                 )
               })}
@@ -275,6 +269,19 @@ const Header: React.FC<HeaderProps> = ({
                   </button>
                 </>
               )}
+
+              {/* Mobile Store Button */}
+              <div className="h-px bg-white/[0.03] my-2"></div>
+              <a
+                href="https://www.slenderhub.shop/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm text-amber-400 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-all duration-300"
+              >
+                <ShoppingBag size={18} strokeWidth={2} className="text-amber-500" />
+                Store — Premium Access & Items
+              </a>
             </div>
           </div>
         </div>

@@ -83,7 +83,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         <form onSubmit={handleAuth} className="space-y-6 relative z-10">
           <div className="space-y-2">
-            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Terminal_Email</label>
+            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
             <div className="relative group/input">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-emerald-400 transition-colors" size={18} />
               <input
@@ -98,7 +98,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Secure_Hash_Password</label>
+            <label className="block text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Password</label>
             <div className="relative group/input">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-emerald-400 transition-colors" size={18} />
               <input
