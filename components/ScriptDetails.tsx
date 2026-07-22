@@ -193,8 +193,7 @@ const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScri
 
             <button
               onClick={() => {
-                const url = new URL(window.location.origin);
-                url.searchParams.set('id', script.id);
+                const url = new URL(`/script/${encodeURIComponent(script.id)}`, window.location.origin);
                 navigator.clipboard.writeText(url.toString());
                 alert('Script link copied to clipboard!');
               }}

@@ -17,6 +17,43 @@ import { useScripts } from './hooks/useScripts';
 import { useAuth } from './hooks/useAuth';
 import { useExecutors } from './hooks/useExecutors';
 
+type View = 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub';
+
+const viewPaths: Record<Exclude<View, 'details'>, string> = {
+  scripts: '/',
+  executors: '/executors',
+  admin: '/admin',
+  profile: '/profile',
+  settings: '/settings',
+  about: '/about',
+  slenderhub: '/slenderhub',
+};
+
+const validViews = Object.keys(viewPaths) as Exclude<View, 'details'>[];
+
+const getRoute = (): { view: View; scriptId?: string } => {
+  const params = new URLSearchParams(window.location.search);
+  const legacyScriptId = params.get('id');
+  const legacyView = params.get('view');
+  const path = window.location.pathname.replace(/\/+$/, '') || '/';
+
+  if (legacyScriptId) return { view: 'details', scriptId: legacyScriptId };
+  if (legacyView && validViews.includes(legacyView as Exclude<View, 'details'>)) {
+    return { view: legacyView as Exclude<View, 'details'> };
+  }
+  if (path.startsWith('/script/')) {
+    return { view: 'details', scriptId: decodeURIComponent(path.slice('/script/'.length)) };
+  }
+
+  const view = validViews.find((candidate) => viewPaths[candidate] === path);
+  return { view: view ?? 'scripts' };
+};
+
+const getPath = (view: View, scriptId?: string) => {
+  if (view === 'details') return scriptId ? `/script/${encodeURIComponent(scriptId)}` : '/';
+  return viewPaths[view];
+};
+
 const App: React.FC = () => {
   const {
     scripts,
@@ -36,7 +73,7 @@ const App: React.FC = () => {
   const loading = scriptsLoading || authLoading || executorsLoading;
 
   // Navigation State
-  const [currentView, setCurrentView] = useState<'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub'>('scripts');
+  const [currentView, setCurrentView] = useState<View>('scripts');
 
   // Modal & Selection States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -46,87 +83,52 @@ const App: React.FC = () => {
   const [scriptToEdit, setScriptToEdit] = useState<Script | null>(null);
   const [viewProfileAuthor, setViewProfileAuthor] = useState('');
 
-  // --- Hash URL Sanitizer ---
-  // If the URL contains a hash-based route (e.g. /#/view or /#view),
-  // strip it and redirect to clean URL without page reload.
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash && hash.startsWith('#')) {
+    if (hash.startsWith('#')) {
       const cleanHash = hash.replace(/^#\/?/, '');
-      const url = new URL(window.location.href);
-      url.hash = '';
-      if (cleanHash && cleanHash !== '/') {
-        // Try to parse hash as a view name
-        const [hashView] = cleanHash.split('?');
-        const validViews = ['scripts', 'executors', 'admin', 'profile', 'settings', 'about', 'slenderhub'];
-        if (validViews.includes(hashView)) {
-          url.searchParams.set('view', hashView);
-        }
+      if (cleanHash && validViews.includes(cleanHash as Exclude<View, 'details'>)) {
+        window.history.replaceState({}, '', getPath(cleanHash as Exclude<View, 'details'>));
+        return;
       }
-      window.history.replaceState({}, '', url.toString());
+    }
+
+    if (window.location.search) {
+      const route = getRoute();
+      window.history.replaceState({}, '', getPath(route.view, route.scriptId));
     }
   }, []);
 
-  // Sync state to URL
   const updateURL = (view: string, id?: string) => {
     try {
-      const url = new URL(window.location.href);
-      url.hash = ''; // always strip any hash
-      url.searchParams.delete('view');
-      url.searchParams.delete('id');
-
-      if (id) {
-        url.searchParams.set('id', id);
-      } else if (view !== 'scripts') {
-        url.searchParams.set('view', view);
-      }
-
-      window.history.pushState({}, '', url.toString());
+      window.history.pushState({}, '', getPath(view as View, id));
     } catch (e) {
       console.error('URL update failed', e);
     }
   };
 
 
-  // URL Parameter Handling
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const view = params.get('view') as any;
-    const scriptId = params.get('id');
+    const applyRoute = () => {
+      const { view, scriptId } = getRoute();
 
-    if (scriptId && scripts.length > 0) {
-      const script = scripts.find(s => s.id === scriptId);
-      if (script) {
-        setSelectedScript(script);
-        setCurrentView('details');
-      }
-    } else if (view && ['scripts', 'executors', 'admin', 'profile', 'settings', 'about', 'slenderhub'].includes(view)) {
-      if (view === 'admin' && !isAdmin) {
-        setCurrentView('scripts');
-      } else {
-        setCurrentView(view);
-      }
-    }
-
-    const handlePopState = () => {
-      const p = new URLSearchParams(window.location.search);
-      const v = p.get('view') || 'scripts';
-      const sid = p.get('id');
-
-      if (sid && scripts.length > 0) {
-        const script = scripts.find(s => s.id === sid);
+      if (scriptId && scripts.length > 0) {
+        const script = scripts.find(s => s.id === scriptId);
         if (script) {
           setSelectedScript(script);
           setCurrentView('details');
         }
+      } else if (view === 'admin' && !isAdmin) {
+        setCurrentView('scripts');
       } else {
-        setCurrentView(v as any);
+        setCurrentView(view);
         setSelectedScript(null);
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    applyRoute();
+    window.addEventListener('popstate', applyRoute);
+    return () => window.removeEventListener('popstate', applyRoute);
   }, [scripts.length > 0, isAdmin]);
 
   const handlePublish = async () => {
@@ -149,6 +151,7 @@ const App: React.FC = () => {
   const handleAuthorClick = (authorName: string) => {
     setViewProfileAuthor(authorName);
     setCurrentView('profile');
+    updateURL('profile');
     window.scrollTo(0, 0);
   };
 

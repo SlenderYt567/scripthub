@@ -59,10 +59,6 @@ const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-3 cursor-pointer group"
               onClick={() => {
                 setCurrentView('scripts');
-                const url = new URL(window.location.href);
-                url.searchParams.delete('view');
-                url.searchParams.delete('id');
-                window.history.pushState({}, '', url.toString());
               }}
             >
               <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-zinc-900 border border-white/10 shadow-sm group-hover:border-white/30 transition-all duration-300">
