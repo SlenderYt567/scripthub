@@ -1,12 +1,14 @@
 import React from 'react';
 import { Download, Monitor, Smartphone, Apple, AlertCircle, CheckCircle, Loader2, AlertTriangle, ShieldCheck, Terminal, Sparkles, Cpu } from 'lucide-react';
 import { Executor } from '../types';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface ExecutorCardProps {
   executor: Executor;
 }
 
 const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
+  const hasSafeDownloadUrl = isSafeExternalUrl(executor.downloadUrl);
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -128,10 +130,10 @@ const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
             </div>
           </div>
 
-          {executor.status === 'Detected' ? (
+          {executor.status === 'Detected' || !hasSafeDownloadUrl ? (
             <div className="w-full py-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest cursor-not-allowed">
               <AlertTriangle size={16} />
-              Protocol Terminated - Unsafe
+              {executor.status === 'Detected' ? 'Protocol Terminated - Unsafe' : 'Invalid Download Link'}
             </div>
           ) : (
             <a

@@ -6,31 +6,26 @@ export function useAuth() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const checkAdmin = async (email: string | undefined) => {
-        if (!email) {
+    const checkAdmin = async (userId: string | undefined) => {
+        if (!userId) {
             setIsAdmin(false);
             return;
         }
-        const { data } = await supabase
-            .from('admin_users')
-            .select('id')
-            .eq('email', email)
-            .maybeSingle();
-
-        setIsAdmin(!!data);
+        const { data, error } = await supabase.rpc('is_admin');
+        setIsAdmin(!error && data === true);
     };
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
-            checkAdmin(session?.user?.email).finally(() => setLoading(false));
+            checkAdmin(session?.user?.id).finally(() => setLoading(false));
         });
 
         // Listen for auth state changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
-            checkAdmin(session?.user?.email);
+            checkAdmin(session?.user?.id);
         });
 
         return () => subscription.unsubscribe();

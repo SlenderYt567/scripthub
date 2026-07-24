@@ -7,6 +7,7 @@ import { Script, Executor, AdminUser, SupportedGame } from '../types';
 import { supabase } from '../lib/supabase';
 import EditExecutorModal from './EditExecutorModal';
 import { useSupportedGames } from '../hooks/useSupportedGames';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface AdminDashboardProps {
   scripts: Script[];
@@ -159,13 +160,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       alert("Please upload an image for the executor");
       return;
     }
+    if (!isSafeExternalUrl(newExecutor.downloadUrl)) {
+      alert('Download URLs must use HTTPS.');
+      return;
+    }
 
     setIsSubmittingExecutor(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be signed in to upload an image.');
       // 1. Upload Image
       const fileExt = executorImageFile.name.split('.').pop();
-      const fileName = `executors/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const fileName = `${user.id}/executors/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('images')

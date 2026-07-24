@@ -6,7 +6,7 @@ interface HeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onOpenPublish: () => void;
-  currentView: 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub';
+  currentView: 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub' | 'notFound';
   setCurrentView: (view: any) => void;
   isAdmin: boolean;
   user: any;

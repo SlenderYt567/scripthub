@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UploadCloud, Link as LinkIcon, Youtube, MessageCircle, Globe, Plus, Trash2, ArrowRight, Loader2, Image as ImageIcon, Key, Star, Sparkles, CheckCircle2, ExternalLink } from 'lucide-react';
 import { Script, Task, TaskType } from '../types';
 import { supabase } from '../lib/supabase';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -95,6 +96,10 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
 
   const handleAddTask = () => {
     if (!activeTaskType || !tempTaskUrl) return;
+    if (!isSafeExternalUrl(tempTaskUrl)) {
+      alert('Task URLs must use HTTPS.');
+      return;
+    }
 
     let defaultText = '';
     switch (activeTaskType) {
@@ -134,6 +139,10 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
       alert("You must provide either a 'Raw Script URL' (for direct code) OR a 'Monetization Link' (for external download).");
       return;
     }
+    if ((formData.rawLink && !isSafeExternalUrl(formData.rawLink)) || (formData.shortenerLink && !isSafeExternalUrl(formData.shortenerLink))) {
+      alert('Script URLs must use HTTPS.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -142,9 +151,10 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
 
       // 1. Upload Image to Supabase Storage (Only if new file selected)
       if (imageFile) {
+        if (!currentUser?.id) throw new Error('You must be signed in to upload an image.');
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `thumbnails/${fileName}`;
+        const filePath = `${currentUser.id}/thumbnails/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('images')

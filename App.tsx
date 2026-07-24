@@ -17,9 +17,9 @@ import { useScripts } from './hooks/useScripts';
 import { useAuth } from './hooks/useAuth';
 import { useExecutors } from './hooks/useExecutors';
 
-type View = 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub';
+type View = 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub' | 'notFound';
 
-const viewPaths: Record<Exclude<View, 'details'>, string> = {
+const viewPaths: Record<Exclude<View, 'details' | 'notFound'>, string> = {
   scripts: '/',
   executors: '/executors',
   admin: '/admin',
@@ -29,28 +29,33 @@ const viewPaths: Record<Exclude<View, 'details'>, string> = {
   slenderhub: '/slenderhub',
 };
 
-const validViews = Object.keys(viewPaths) as Exclude<View, 'details'>[];
+const validViews = Object.keys(viewPaths) as Exclude<View, 'details' | 'notFound'>[];
 
-const getRoute = (): { view: View; scriptId?: string } => {
+const getRoute = (): { view: View; scriptId?: string; profileName?: string } => {
   const params = new URLSearchParams(window.location.search);
   const legacyScriptId = params.get('id');
   const legacyView = params.get('view');
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
 
   if (legacyScriptId) return { view: 'details', scriptId: legacyScriptId };
-  if (legacyView && validViews.includes(legacyView as Exclude<View, 'details'>)) {
-    return { view: legacyView as Exclude<View, 'details'> };
+  if (legacyView && validViews.includes(legacyView as Exclude<View, 'details' | 'notFound'>)) {
+    return { view: legacyView as Exclude<View, 'details' | 'notFound'> };
   }
   if (path.startsWith('/script/')) {
     return { view: 'details', scriptId: decodeURIComponent(path.slice('/script/'.length)) };
   }
+  if (path.startsWith('/profile/')) {
+    return { view: 'profile', profileName: decodeURIComponent(path.slice('/profile/'.length)) };
+  }
 
   const view = validViews.find((candidate) => viewPaths[candidate] === path);
-  return { view: view ?? 'scripts' };
+  return { view: view ?? 'notFound' };
 };
 
 const getPath = (view: View, scriptId?: string) => {
   if (view === 'details') return scriptId ? `/script/${encodeURIComponent(scriptId)}` : '/';
+  if (view === 'profile') return scriptId ? `/profile/${encodeURIComponent(scriptId)}` : '/';
+  if (view === 'notFound') return '/';
   return viewPaths[view];
 };
 
@@ -87,15 +92,15 @@ const App: React.FC = () => {
     const hash = window.location.hash;
     if (hash.startsWith('#')) {
       const cleanHash = hash.replace(/^#\/?/, '');
-      if (cleanHash && validViews.includes(cleanHash as Exclude<View, 'details'>)) {
-        window.history.replaceState({}, '', getPath(cleanHash as Exclude<View, 'details'>));
+      if (cleanHash && validViews.includes(cleanHash as Exclude<View, 'details' | 'notFound'>)) {
+        window.history.replaceState({}, '', getPath(cleanHash as Exclude<View, 'details' | 'notFound'>));
         return;
       }
     }
 
     if (window.location.search) {
       const route = getRoute();
-      window.history.replaceState({}, '', getPath(route.view, route.scriptId));
+      window.history.replaceState({}, '', getPath(route.view, route.scriptId ?? route.profileName));
     }
   }, []);
 
@@ -107,17 +112,44 @@ const App: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const titleByView: Record<View, string> = {
+      scripts: 'Script Hub - Roblox Scripts',
+      executors: 'Executors - Script Hub',
+      details: selectedScript ? `${selectedScript.title} - Script Hub` : 'Script Details - Script Hub',
+      admin: 'Admin - Script Hub',
+      profile: viewProfileAuthor ? `${viewProfileAuthor} - Script Hub` : 'Profile - Script Hub',
+      settings: 'Settings - Script Hub',
+      about: 'Network - Script Hub',
+      slenderhub: 'SlenderHub - Premium Roblox Script',
+      notFound: 'Page Not Found - Script Hub',
+    };
+    const pageUrl = `${window.location.origin}${window.location.pathname}`;
+
+    document.title = titleByView[currentView];
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', pageUrl);
+    document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', pageUrl);
+    document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', titleByView[currentView]);
+  }, [currentView, selectedScript, viewProfileAuthor]);
+
 
   useEffect(() => {
     const applyRoute = () => {
-      const { view, scriptId } = getRoute();
+      const { view, scriptId, profileName } = getRoute();
 
       if (scriptId && scripts.length > 0) {
         const script = scripts.find(s => s.id === scriptId);
         if (script) {
           setSelectedScript(script);
           setCurrentView('details');
+        } else {
+          setSelectedScript(null);
+          setCurrentView('notFound');
         }
+      } else if (view === 'profile' && profileName) {
+        setViewProfileAuthor(profileName);
+        setSelectedScript(null);
+        setCurrentView('profile');
       } else if (view === 'admin' && !isAdmin) {
         setCurrentView('scripts');
       } else {
@@ -151,7 +183,7 @@ const App: React.FC = () => {
   const handleAuthorClick = (authorName: string) => {
     setViewProfileAuthor(authorName);
     setCurrentView('profile');
-    updateURL('profile');
+    updateURL('profile', authorName);
     window.scrollTo(0, 0);
   };
 
@@ -338,6 +370,20 @@ const App: React.FC = () => {
             onScriptClick={handleScriptClick}
             onBack={handleBackToHub}
           />
+        )}
+
+        {/* VIEW: NOT FOUND */}
+        {currentView === 'notFound' && (
+          <div className="min-h-[50vh] flex flex-col items-center justify-center text-center animate-fade-in">
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">Page not found</h1>
+            <p className="mt-4 max-w-md text-zinc-500 font-medium">This route does not exist or the script is no longer available.</p>
+            <button
+              onClick={handleBackToHub}
+              className="mt-8 px-8 py-3.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-full transition-all active:scale-95"
+            >
+              Back to Index
+            </button>
+          </div>
         )}
 
         {/* VIEW: SETTINGS */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Save, Lock, Youtube, MessageCircle, Link as LinkIcon, Loader2, CheckCircle, Image as ImageIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { UserProfile } from '../types';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface SettingsViewProps {
   user: any;
@@ -61,6 +62,13 @@ const SettingsView: React.FC<SettingsViewProps> = ({ user }) => {
     e.preventDefault();
     setSaving(true);
     setMessage('');
+
+    const linksToValidate = [profile.avatar_url, profile.youtube_url, profile.discord_url].filter(Boolean);
+    if (linksToValidate.some((url) => !isSafeExternalUrl(url))) {
+      setMessage('Use only valid HTTPS links.');
+      setSaving(false);
+      return;
+    }
 
     const { error } = await supabase
       .from('profiles')

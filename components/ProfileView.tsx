@@ -3,6 +3,7 @@ import { Script, UserProfile } from '../types';
 import ScriptCard from './ScriptCard';
 import { User, MessageCircle, Youtube, Calendar, Loader2, ArrowLeft, Trophy, ExternalLink, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface ProfileViewProps {
   authorName: string; // We use username/author for now as the key
@@ -142,12 +143,12 @@ const ProfileView: React.FC<ProfileViewProps> = ({ authorName, onScriptClick, on
             </p>
 
             <div className="flex items-center justify-center md:justify-start gap-4 flex-wrap pt-2">
-              {profile?.youtube_url && (
+              {isSafeExternalUrl(profile?.youtube_url) && (
                 <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer" className="group/social flex items-center gap-3 px-6 py-3 bg-red-500/5 hover:bg-red-500/10 text-red-500 rounded-2xl transition-all border border-red-500/10 hover:border-red-500/30 font-black uppercase text-xs tracking-widest">
                   <Youtube size={18} strokeWidth={2.5} /> Dev Channel
                 </a>
               )}
-              {profile?.discord_url && (
+              {isSafeExternalUrl(profile?.discord_url) && (
                 <a href={profile.discord_url} target="_blank" rel="noopener noreferrer" className="group/social flex items-center gap-3 px-6 py-3 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-500 rounded-2xl transition-all border border-indigo-500/10 hover:border-indigo-500/30 font-black uppercase text-xs tracking-widest">
                   <MessageCircle size={18} strokeWidth={2.5} /> Discord Lab
                 </a>

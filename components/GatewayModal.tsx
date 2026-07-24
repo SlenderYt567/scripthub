@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Youtube, MessageCircle, Link as LinkIcon, Lock, CheckCircle, Copy, Code, Globe, ArrowRight, ExternalLink, Terminal, ShieldAlert, ChevronRight, Loader2, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { Script, Task, TaskType } from '../types';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface GatewayModalProps {
   script: Script | null;
@@ -47,7 +48,11 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
     if (completedTaskIds.has(task.id)) return;
 
     // Open link
-    window.open(task.url, '_blank');
+    if (!isSafeExternalUrl(task.url)) {
+      alert('This task has an invalid URL.');
+      return;
+    }
+    window.open(task.url, '_blank', 'noopener,noreferrer');
     setLoadingTask(task.id);
 
     // Simulate verification (1.5s delay)
@@ -77,7 +82,11 @@ const GatewayModal: React.FC<GatewayModalProps> = ({ script, isOpen, onClose }) 
 
   const handleShortenerClick = () => {
     if (script.shortenerLink) {
-      window.open(script.shortenerLink, '_blank');
+      if (!isSafeExternalUrl(script.shortenerLink)) {
+        alert('This link has an invalid URL.');
+        return;
+      }
+      window.open(script.shortenerLink, '_blank', 'noopener,noreferrer');
       onClose(); // Close modal as user is taken away
     }
   };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Cpu, Globe, Image as ImageIcon, Loader2, ArrowRight, Zap } from 'lucide-react';
 import { Executor } from '../types';
 import { supabase } from '../lib/supabase';
+import { isSafeExternalUrl } from '../utils/url';
 
 interface EditExecutorModalProps {
     isOpen: boolean;
@@ -50,14 +51,20 @@ const EditExecutorModal: React.FC<EditExecutorModalProps> = ({ isOpen, onClose, 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!isSafeExternalUrl(formData.downloadUrl)) {
+            alert('Download URLs must use HTTPS.');
+            return;
+        }
         setIsSubmitting(true);
 
         try {
             let publicUrl = executor.imageUrl;
 
             if (imageFile) {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('You must be signed in to upload an image.');
                 const fileExt = imageFile.name.split('.').pop();
-                const fileName = `executors/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const fileName = `${user.id}/executors/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('images')
