@@ -30,7 +30,7 @@ async function generatePages() {
     if (!response.ok) throw new Error(`Could not fetch public scripts for SEO pages: HTTP ${response.status}`);
     scripts = await response.json();
   }
-  const urls = ['/', '/executors', '/about', '/slenderhub'];
+  const urls = ['/', '/executors', '/about', '/privacy', '/slenderhub'];
   for (const script of scripts) {
     if (!/^[0-9a-f-]{36}$/i.test(script.id)) continue;
     const scriptPath = `/script/${script.id}`;

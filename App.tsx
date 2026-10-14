@@ -16,9 +16,10 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const ProfileView = lazy(() => import('./components/ProfileView'));
 const SettingsView = lazy(() => import('./components/SettingsView'));
 const AboutView = lazy(() => import('./components/AboutView'));
+const PrivacyView = lazy(() => import('./components/PrivacyView'));
 const SlenderHubView = lazy(() => import('./components/SlenderHubView'));
 
-type View = 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub' | 'notFound';
+type View = 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'privacy' | 'slenderhub' | 'notFound';
 
 const viewPaths: Record<Exclude<View, 'details' | 'notFound'>, string> = {
   scripts: '/',
@@ -27,6 +28,7 @@ const viewPaths: Record<Exclude<View, 'details' | 'notFound'>, string> = {
   profile: '/profile',
   settings: '/settings',
   about: '/about',
+  privacy: '/privacy',
   slenderhub: '/slenderhub',
 };
 
@@ -134,6 +136,7 @@ const App: React.FC = () => {
       profile: viewProfileAuthor && !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(viewProfileAuthor) ? `${viewProfileAuthor} - Script Hub` : 'Profile - Script Hub',
       settings: 'Settings - Script Hub',
       about: 'Network - Script Hub',
+      privacy: 'Privacy Policy - Script Hub',
       slenderhub: 'SlenderHub - Premium Roblox Script',
       notFound: 'Page Not Found - Script Hub',
     };
@@ -469,6 +472,10 @@ const App: React.FC = () => {
           <AboutView onBack={handleBackToHub} />
         )}
 
+        {currentView === 'privacy' && (
+          <PrivacyView />
+        )}
+
         {/* VIEW: SLENDERHUB (Official Scripts Only) */}
         {currentView === 'slenderhub' && (
           <SlenderHubView />
@@ -486,6 +493,7 @@ const App: React.FC = () => {
             SlenderHub
           </div>
           <p>&copy; {new Date().getFullYear()} Script Hub. All rights reserved.</p>
+          <button type="button" onClick={() => { handleChangeView('privacy'); window.scrollTo(0, 0); }} className="mt-3 text-sm text-zinc-400 underline underline-offset-4 hover:text-white">Privacy Policy</button>
           <p className="mt-2 text-xs text-slate-600 max-w-md text-center">Disclaimer: This platform is for educational purposes only. Users are responsible for their own actions.</p>
         </div>
       </footer>
