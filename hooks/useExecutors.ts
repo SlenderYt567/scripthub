@@ -22,7 +22,8 @@ export function useExecutors() {
                     imageUrl: e.image_url,
                     downloadUrl: e.download_url,
                     status: e.status,
-                    platform: e.platform
+                    platform: e.platform,
+                    lastVerifiedAt: e.last_verified_at ? new Date(e.last_verified_at).getTime() : undefined
                 }));
                 setExecutors(mappedExecutors);
             }

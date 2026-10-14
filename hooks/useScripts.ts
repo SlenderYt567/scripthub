@@ -1,91 +1,121 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Script } from '../types';
+import type { Script } from '../types';
+import { mapScript } from '../utils/mapScript';
 
-export function useScripts() {
-    const [scripts, setScripts] = useState<Script[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
+const PAGE_SIZE = 24;
+const SCRIPT_COLUMNS = 'id,title,game_name,description,image_url,author,author_id,views,raw_link,shortener_link,verified,is_official,key_system,created_at,last_verified_at,tasks(*)';
 
-    const fetchScripts = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const { data: scriptsData, error: fetchError } = await supabase
-                .from('scripts')
-                .select(`*, tasks (*)`)
-                .order('created_at', { ascending: false });
+export type ScriptSort = 'recent' | 'popular' | 'official';
+export type AccessFilter = 'all' | 'free' | 'keyed';
 
-            if (fetchError) throw fetchError;
+export function useScripts(adminMode = false) {
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [adminScripts, setAdminScripts] = useState<Script[]>([]);
+  const [featuredScripts, setFeaturedScripts] = useState<Script[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [gameFilter, setGameFilter] = useState('');
+  const [accessFilter, setAccessFilter] = useState<AccessFilter>('all');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<ScriptSort>('recent');
+  const requestId = useRef(0);
 
-            if (scriptsData) {
-                const mappedScripts: Script[] = scriptsData.map((s: any) => ({
-                    id: s.id,
-                    title: s.title,
-                    gameName: s.game_name,
-                    description: s.description,
-                    imageUrl: s.image_url,
-                    author: s.author,
-                    views: s.views,
-                    rawLink: s.raw_link,
-                    shortenerLink: s.shortener_link,
-                    verified: s.verified,
-                    isOfficial: s.is_official,
-                    keySystem: s.key_system || false,
-                    createdAt: new Date(s.created_at).getTime(),
-                    tasks: s.tasks || []
-                }));
-                setScripts(mappedScripts);
-            }
-        } catch (err) {
-            console.error('Error loading scripts:', err);
-            setError(err instanceof Error ? err : new Error('Unknown error loading scripts'));
-        } finally {
-            setLoading(false);
-        }
+  const fetchPage = useCallback(async (offset = 0) => {
+    const id = ++requestId.current;
+    if (offset === 0) setLoading(true);
+    else setLoadingMore(true);
+    setError(null);
+
+    try {
+      let query = supabase.from('scripts')
+        .select(SCRIPT_COLUMNS, { count: 'exact' });
+
+      const search = searchQuery.trim();
+      if (search) query = query.textSearch('search_vector', search, { type: 'plain', config: 'simple' });
+      if (gameFilter.trim()) query = query.ilike('game_name', `%${gameFilter.trim()}%`);
+      if (accessFilter !== 'all') query = query.eq('key_system', accessFilter === 'keyed');
+      if (verifiedOnly) query = query.eq('verified', true);
+
+      if (sortBy === 'popular') query = query.order('views', { ascending: false });
+      else if (sortBy === 'official') query = query.order('is_official', { ascending: false }).order('created_at', { ascending: false });
+      else query = query.order('created_at', { ascending: false });
+
+      const { data, count, error: fetchError } = await query
+        .order('id', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (fetchError) throw fetchError;
+      if (id !== requestId.current) return;
+      const mapped = (data || []).map(mapScript);
+      setScripts(previous => offset === 0 ? mapped : [...previous, ...mapped]);
+      setTotalCount(count ?? 0);
+    } catch (cause) {
+      if (id !== requestId.current) return;
+      setError(cause instanceof Error ? cause : new Error('Unable to load scripts'));
+    } finally {
+      if (id === requestId.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
+  }, [searchQuery, gameFilter, accessFilter, verifiedOnly, sortBy]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void fetchPage(0); }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      requestId.current += 1;
     };
+  }, [fetchPage]);
 
-    useEffect(() => {
-        fetchScripts();
-    }, []);
+  const refreshFeatured = useCallback(async () => {
+    const { data, error: fetchError } = await supabase.from('scripts')
+      .select(SCRIPT_COLUMNS)
+      .order('is_official', { ascending: false })
+      .order('views', { ascending: false })
+      .limit(3);
+    if (!fetchError) setFeaturedScripts((data || []).map(mapScript));
+  }, []);
 
-    const filteredScripts = useMemo(() => {
-        const q = searchQuery.toLowerCase();
-        return scripts.filter(script =>
-            script.title.toLowerCase().includes(q) ||
-            script.gameName.toLowerCase().includes(q) ||
-            script.author.toLowerCase().includes(q)
-        ).sort((a, b) => {
-            if (a.isOfficial && !b.isOfficial) return -1;
-            if (!a.isOfficial && b.isOfficial) return 1;
-            return 0;
-        });
-    }, [scripts, searchQuery]);
+  const refreshAdminScripts = useCallback(async () => {
+    const { data, error: fetchError } = await supabase.from('scripts')
+      .select(SCRIPT_COLUMNS)
+      .order('created_at', { ascending: false });
+    if (!fetchError) setAdminScripts((data || []).map(mapScript));
+  }, []);
 
-    const trendingScripts = useMemo(() => {
-        return [...scripts].sort((a, b) => b.views - a.views).slice(0, 4);
-    }, [scripts]);
+  useEffect(() => { void refreshFeatured(); }, [refreshFeatured]);
+  useEffect(() => { if (adminMode) void refreshAdminScripts(); }, [adminMode, refreshAdminScripts]);
 
-    // Use views and interaction as a proxy for "Featured", mostly prioritizing official
-    const featuredScripts = useMemo(() => {
-        return [...scripts].sort((a, b) => {
-            const scoreA = (a.isOfficial ? 1000 : 0) + a.views;
-            const scoreB = (b.isOfficial ? 1000 : 0) + b.views;
-            return scoreB - scoreA;
-        }).slice(0, 6);
-    }, [scripts]);
+  const refreshScripts = async () => {
+    await Promise.all([fetchPage(0), refreshFeatured(), ...(adminMode ? [refreshAdminScripts()] : [])]);
+  };
 
-    return {
-        scripts,
-        setScripts,
-        loading,
-        error,
-        searchQuery,
-        setSearchQuery,
-        filteredScripts,
-        trendingScripts,
-        featuredScripts,
-        refreshScripts: fetchScripts
-    };
+  return {
+    scripts, setScripts,
+    adminScripts, setAdminScripts,
+    loading, loadingMore, error,
+    searchQuery, setSearchQuery,
+    gameFilter, setGameFilter,
+    accessFilter, setAccessFilter,
+    verifiedOnly, setVerifiedOnly,
+    sortBy, setSortBy,
+    totalCount, hasMore: scripts.length < totalCount,
+    featuredScripts,
+    loadMore: () => fetchPage(scripts.length),
+    refreshScripts,
+    refreshAdminScripts,
+  };
+}
+
+export async function fetchScriptById(id: string): Promise<Script | null> {
+  const { data, error } = await supabase.from('scripts')
+    .select(SCRIPT_COLUMNS)
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapScript(data) : null;
 }

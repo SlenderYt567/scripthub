@@ -1,20 +1,18 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Script Hub
 
-# Run and deploy your AI Studio app
+React, Vite and Supabase application for publishing scripts, managing executors and viewing author profiles.
 
-This contains everything you need to run your app locally.
+## Run locally
 
-View your app in AI Studio: https://ai.studio/apps/drive/1jGY8BMsQ7H0XLhKr-75dPtW1y4z5IBk9
+1. Install Node.js and run `npm ci`.
+2. Create `.env.local` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from your Supabase project. Use a publishable or legacy anon key, never a service role key.
+3. Run `npm run dev`.
 
-## Run Locally
+For a new database, apply `schema.sql` once. Create an Auth user for the owner and add that user's email to `public.admin_users` with role `Owner`. Then apply the SQL files in `supabase/migrations/` in filename order and create the public `images` Storage bucket. The existing Supabase project already has these migrations applied.
 
-**Prerequisites:**  Node.js
+## Checks
 
+- `node_modules/.bin/tsc --noEmit` checks TypeScript.
+- `npm run build` creates the production bundle in `dist/`.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+The site uses client side routes. `vercel.json` rewrites those routes to `index.html` when deployed on Vercel.

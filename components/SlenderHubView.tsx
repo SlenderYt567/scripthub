@@ -58,7 +58,7 @@ const SlenderHubView: React.FC = () => {
             </h1>
             
             <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-medium">
-              Dominate your favorite games with our high-performance tools. Clean interface, fast execution, and continuous support for top titles. Join +10K users today.
+              Copy the SlenderHub loader and explore the supported games below. Check the destination before running external code.
             </p>
 
             <div className="flex flex-col items-center gap-6 mb-16">
@@ -94,24 +94,24 @@ const SlenderHubView: React.FC = () => {
               </div>
             </div>
 
-            {/* Stats Section */}
+            {/* Product features */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
               <div className="glass-card rounded-2xl p-6 flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
                 <Server className="text-zinc-300 mb-4" size={24} />
-                <h3 className="text-3xl font-semibold text-white mb-1 tracking-tight">99.99%</h3>
-                <p className="text-sm font-medium text-zinc-500 tracking-wide">Uptime</p>
+                <h3 className="text-xl font-semibold text-white mb-1 tracking-tight">Loader</h3>
+                <p className="text-sm font-medium text-zinc-500 tracking-wide">Copy in one click</p>
               </div>
               
               <div className="glass-card rounded-2xl p-6 flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
                 <Users className="text-zinc-300 mb-4" size={24} />
-                <h3 className="text-3xl font-semibold text-white mb-1 tracking-tight">+10K</h3>
-                <p className="text-sm font-medium text-zinc-500 tracking-wide">Active Users</p>
+                <h3 className="text-xl font-semibold text-white mb-1 tracking-tight">Games</h3>
+                <p className="text-sm font-medium text-zinc-500 tracking-wide">Browse supported titles</p>
               </div>
               
               <div className="glass-card rounded-2xl p-6 flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
                 <Star className="text-zinc-300 mb-4" size={24} />
-                <h3 className="text-3xl font-semibold text-white mb-1 tracking-tight">4.8/5</h3>
-                <p className="text-sm font-medium text-zinc-500 tracking-wide">Average Rating</p>
+                <h3 className="text-xl font-semibold text-white mb-1 tracking-tight">Directory</h3>
+                <p className="text-sm font-medium text-zinc-500 tracking-wide">Explore community scripts</p>
               </div>
             </div>
 

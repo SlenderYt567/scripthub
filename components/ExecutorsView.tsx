@@ -6,9 +6,10 @@ import { Terminal, Shield, Activity, Cpu, Database, Zap, Sparkles } from 'lucide
 interface ExecutorsViewProps {
   executors: Executor[];
   loading: boolean;
+  onLoginRequested: () => void;
 }
 
-const ExecutorsView: React.FC<ExecutorsViewProps> = ({ executors, loading }) => {
+const ExecutorsView: React.FC<ExecutorsViewProps> = ({ executors, loading, onLoginRequested }) => {
   return (
     <div className="animate-fade-in space-y-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header Section: High-End Cyber Terminal */}
@@ -22,7 +23,7 @@ const ExecutorsView: React.FC<ExecutorsViewProps> = ({ executors, loading }) => 
               <div>
                 <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Exploit Nexus</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Verified Executor Repository</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Executor Directory</span>
                   <Sparkles size={12} className="text-emerald-500" />
                 </div>
               </div>
@@ -34,13 +35,6 @@ const ExecutorsView: React.FC<ExecutorsViewProps> = ({ executors, loading }) => 
               <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">Active Modules</span>
               <div className="text-xl font-black text-emerald-400 tabular-nums leading-none flex items-center gap-2">
                 <Zap size={16} /> {executors.length}
-              </div>
-            </div>
-            <div className="w-px h-8 bg-slate-800"></div>
-            <div className="flex flex-col">
-              <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1">Global Latency</span>
-              <div className="text-xl font-black text-indigo-400 tabular-nums leading-none flex items-center gap-2">
-                <Activity size={16} /> 14ms
               </div>
             </div>
           </div>
@@ -68,7 +62,7 @@ const ExecutorsView: React.FC<ExecutorsViewProps> = ({ executors, loading }) => 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {executors.map(executor => (
             <div key={executor.id} className="animate-fade-in-up">
-              <ExecutorCard executor={executor} />
+              <ExecutorCard executor={executor} onLoginRequested={onLoginRequested} />
             </div>
           ))}
         </div>
@@ -78,7 +72,7 @@ const ExecutorsView: React.FC<ExecutorsViewProps> = ({ executors, loading }) => 
       {!loading && executors.length > 0 && (
         <div className="pt-10 flex flex-col items-center gap-4 border-t border-white/[0.03]">
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-950/50 border border-slate-900 text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] shadow-inner">
-            <Shield size={12} className="text-emerald-500" /> All modules verified against latest security protocols
+            <Shield size={12} className="text-emerald-500" /> Report a broken link to help keep this directory current
           </div>
         </div>
       )}

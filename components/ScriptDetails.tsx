@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, Play, Calendar, User, Eye, ShieldCheck, Gamepad2, AlertTriangle, Link, Pencil, Terminal, Hash, FileCode, Sparkles, Clock, Globe } from 'lucide-react';
 import { Script } from '../types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
+import ReportLinkButton from './ReportLinkButton';
 
 interface ScriptDetailsProps {
   script: Script;
@@ -10,10 +11,11 @@ interface ScriptDetailsProps {
   isAdmin: boolean;
   user: SupabaseUser | null;
   onEdit: (script: Script) => void;
+  onLoginRequested: () => void;
 }
 
-const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScript, isAdmin, user, onEdit }) => {
-  const isAuthor = user?.email?.split('@')[0] === script.author;
+const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScript, isAdmin, user, onEdit, onLoginRequested }) => {
+  const isAuthor = Boolean(user?.id && script.author_id === user.id);
   const canEdit = isAdmin || isAuthor;
 
   return (
@@ -139,7 +141,7 @@ const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScri
                 </span>
               )}
               <span className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-[11px] font-bold text-slate-400">
-                STABLE RELEASE
+                {script.lastVerifiedAt ? `Last checked ${new Date(script.lastVerifiedAt).toLocaleDateString()}` : 'Check date unavailable'}
               </span>
             </div>
 
@@ -204,18 +206,7 @@ const ScriptDetails: React.FC<ScriptDetailsProps> = ({ script, onBack, onGetScri
             </button>
           </div>
 
-          <div className="flex items-center gap-3 px-5 py-3 rounded-xl bg-slate-900/30 border border-slate-800/50 w-fit">
-            <div className="flex -space-x-2">
-              {[1, 2, 3].map(i => (
-                <div key={i} className={`w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center`}>
-                  <User size={10} className="text-slate-500" />
-                </div>
-              ))}
-            </div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-              Join 1.2k+ users executing this module
-            </span>
-          </div>
+          <ReportLinkButton scriptId={script.id} onLoginRequested={onLoginRequested} />
         </div>
       </div>
     </div>
