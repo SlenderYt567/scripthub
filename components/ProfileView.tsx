@@ -4,9 +4,10 @@ import ScriptCard from './ScriptCard';
 import { User, MessageCircle, Youtube, Calendar, Loader2, ArrowLeft, Trophy, ExternalLink, Sparkles, ShieldCheck, Zap } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { isSafeExternalUrl } from '../utils/url';
+import { mapScript } from '../utils/mapScript';
 
 interface ProfileViewProps {
-  authorName: string; // We use username/author for now as the key
+  authorName: string;
   onScriptClick: (script: Script) => void;
   onBack: () => void;
 }
@@ -20,47 +21,45 @@ const ProfileView: React.FC<ProfileViewProps> = ({ authorName, onScriptClick, on
     const fetchProfileData = async () => {
       setLoading(true);
       try {
-        // 1. Fetch user's scripts
-        const { data: scriptsData } = await supabase
-          .from('scripts')
-          .select(`*, tasks (*)`)
-          .eq('author', authorName) // Filtering by author name
-          .order('created_at', { ascending: false });
-
-        if (scriptsData) {
-          const mappedScripts: Script[] = scriptsData.map((s: any) => ({
-            id: s.id,
-            title: s.title,
-            gameName: s.game_name,
-            description: s.description,
-            imageUrl: s.image_url,
-            author: s.author,
-            views: s.views,
-            rawLink: s.raw_link,
-            shortenerLink: s.shortener_link,
-            verified: s.verified,
-            keySystem: s.key_system || false,
-            createdAt: new Date(s.created_at).getTime(),
-            tasks: s.tasks || []
-          }));
-          setScripts(mappedScripts);
-        }
-
-        // 2. Fetch Profile Info (Mocked lookup since we don't have direct linkage in this version easily without user ID)
-        const { data: profileData } = await supabase
+        // Resolve the profile first so scripts are matched by the immutable user ID.
+        const isUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authorName);
+        let { data: profileData } = await supabase
           .from('profiles')
           .select('*')
-          .eq('username', authorName)
+          .eq(isUserId ? 'id' : 'username', authorName)
           .maybeSingle();
+
+        // Older links use the text stored on scripts instead of the profile username.
+        if (!profileData && !isUserId) {
+          const { data: legacyScript } = await supabase
+            .from('scripts')
+            .select('author_id')
+            .eq('author', authorName)
+            .not('author_id', 'is', null)
+            .limit(1)
+            .maybeSingle();
+          if (legacyScript?.author_id) {
+            const { data } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', legacyScript.author_id)
+              .maybeSingle();
+            profileData = data;
+          }
+        }
 
         if (profileData) {
           setProfile(profileData);
+          const { data: scriptsData, error: scriptsError } = await supabase
+            .from('scripts')
+            .select('*, tasks (*)')
+            .eq('author_id', profileData.id)
+            .order('created_at', { ascending: false });
+          if (scriptsError) throw scriptsError;
+          setScripts((scriptsData || []).map(mapScript));
         } else {
-          // Partial fallback if no custom profile created yet
-          setProfile({
-            id: 'unknown',
-            username: authorName
-          });
+          setProfile(null);
+          setScripts([]);
         }
 
       } catch (err) {

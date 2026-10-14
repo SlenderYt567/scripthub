@@ -120,7 +120,7 @@ const AboutView: React.FC<AboutViewProps> = ({ onBack }) => {
                 {/* Partners List */}
                 <div className="text-center pt-10">
                     <div className="flex flex-col items-center gap-8">
-                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.6em]">Verified Network Nodes</span>
+                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.6em]">Partner Links</span>
                         <div className="flex justify-center">
                             <a href="https://rocheats.com?ref=slenderscripts" target="_blank" rel="noopener noreferrer" className="group/partner flex flex-col items-center gap-4 opacity-50 hover:opacity-100 transition-all duration-500">
                                 <div className="w-24 h-24 bg-slate-950/80 rounded-[2rem] flex items-center justify-center border border-white/5 group-hover/partner:border-indigo-500/40 transition-colors overflow-hidden p-4 shadow-2xl relative">

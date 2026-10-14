@@ -23,6 +23,19 @@
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-semibold;
   }
+
+  :focus-visible {
+    outline: 2px solid #a5b4fc;
+    outline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Custom Scrollbar */

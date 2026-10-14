@@ -2,12 +2,14 @@ import React from 'react';
 import { Download, Monitor, Smartphone, Apple, AlertCircle, CheckCircle, Loader2, AlertTriangle, ShieldCheck, Terminal, Sparkles, Cpu } from 'lucide-react';
 import { Executor } from '../types';
 import { isSafeExternalUrl } from '../utils/url';
+import ReportLinkButton from './ReportLinkButton';
 
 interface ExecutorCardProps {
   executor: Executor;
+  onLoginRequested: () => void;
 }
 
-const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
+const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor, onLoginRequested }) => {
   const hasSafeDownloadUrl = isSafeExternalUrl(executor.downloadUrl);
 
   const getStatusConfig = (status: string) => {
@@ -123,10 +125,10 @@ const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
         <div className="mt-auto space-y-4">
           <div className="flex items-center justify-between py-3 border-y border-slate-800/50">
             <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">
-              <Cpu size={12} /> Optimization: High
+              <Cpu size={12} /> {executor.platform}
             </div>
             <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono">
-              <ShieldCheck size={12} className="text-emerald-500" /> Secure
+              <ShieldCheck size={12} className="text-emerald-500" /> {executor.lastVerifiedAt ? `Checked ${new Date(executor.lastVerifiedAt).toLocaleDateString()}` : 'Check date unavailable'}
             </div>
           </div>
 
@@ -146,6 +148,7 @@ const ExecutorCard: React.FC<ExecutorCardProps> = ({ executor }) => {
               Initialize Retrieval
             </a>
           )}
+          <ReportLinkButton executorId={executor.id} onLoginRequested={onLoginRequested} />
         </div>
       </div>
     </div>

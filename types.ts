@@ -25,6 +25,7 @@ export interface Script {
   verified?: boolean; // Admin verification status
   isOfficial?: boolean; // SlenderHub Official Script
   keySystem: boolean; // New field: Does it require a key?
+  lastVerifiedAt?: number;
 }
 
 export interface Executor {
@@ -35,6 +36,7 @@ export interface Executor {
   downloadUrl: string;
   status: 'Working' | 'Patched' | 'Updating' | 'Detected';
   platform: 'Windows' | 'Android' | 'iOS' | 'Mac';
+  lastVerifiedAt?: number;
 }
 
 export interface AdminUser {

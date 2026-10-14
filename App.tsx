@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import ScriptCard from './components/ScriptCard';
 import PublishModal from './components/PublishModal';
 import GatewayModal from './components/GatewayModal';
-import ExecutorsView from './components/ExecutorsView';
-import ScriptDetails from './components/ScriptDetails';
-import AdminDashboard from './components/AdminDashboard';
 import AuthModal from './components/AuthModal';
-import ProfileView from './components/ProfileView';
-import SettingsView from './components/SettingsView';
-import AboutView from './components/AboutView';
-import SlenderHubView from './components/SlenderHubView';
 import { Script } from './types';
 import { Layers, Loader2, TrendingUp, Flame, Sparkles } from 'lucide-react';
-import { useScripts } from './hooks/useScripts';
+import { fetchScriptById, useScripts } from './hooks/useScripts';
 import { useAuth } from './hooks/useAuth';
 import { useExecutors } from './hooks/useExecutors';
+
+const ExecutorsView = lazy(() => import('./components/ExecutorsView'));
+const ScriptDetails = lazy(() => import('./components/ScriptDetails'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const ProfileView = lazy(() => import('./components/ProfileView'));
+const SettingsView = lazy(() => import('./components/SettingsView'));
+const AboutView = lazy(() => import('./components/AboutView'));
+const SlenderHubView = lazy(() => import('./components/SlenderHubView'));
 
 type View = 'scripts' | 'executors' | 'details' | 'admin' | 'profile' | 'settings' | 'about' | 'slenderhub' | 'notFound';
 
@@ -60,25 +61,37 @@ const getPath = (view: View, scriptId?: string) => {
 };
 
 const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<View>('scripts');
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const {
     scripts,
-    setScripts,
+    adminScripts,
+    setAdminScripts,
     loading: scriptsLoading,
+    loadingMore,
+    error: scriptsError,
     searchQuery,
     setSearchQuery,
-    filteredScripts,
-    trendingScripts,
+    gameFilter,
+    setGameFilter,
+    accessFilter,
+    setAccessFilter,
+    verifiedOnly,
+    setVerifiedOnly,
+    sortBy,
+    setSortBy,
+    totalCount,
+    hasMore,
     featuredScripts,
+    loadMore,
     refreshScripts
-  } = useScripts();
+  } = useScripts(currentView === 'admin' && isAdmin);
 
-  const { user, isAdmin, loading: authLoading } = useAuth();
   const { executors, setExecutors, loading: executorsLoading, refreshExecutors } = useExecutors();
 
-  const loading = scriptsLoading || authLoading || executorsLoading;
-
-  // Navigation State
-  const [currentView, setCurrentView] = useState<View>('scripts');
+  const loading = scriptsLoading;
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const detailCache = useRef(new Map<string, Script>());
 
   // Modal & Selection States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -118,7 +131,7 @@ const App: React.FC = () => {
       executors: 'Executors - Script Hub',
       details: selectedScript ? `${selectedScript.title} - Script Hub` : 'Script Details - Script Hub',
       admin: 'Admin - Script Hub',
-      profile: viewProfileAuthor ? `${viewProfileAuthor} - Script Hub` : 'Profile - Script Hub',
+      profile: viewProfileAuthor && !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(viewProfileAuthor) ? `${viewProfileAuthor} - Script Hub` : 'Profile - Script Hub',
       settings: 'Settings - Script Hub',
       about: 'Network - Script Hub',
       slenderhub: 'SlenderHub - Premium Roblox Script',
@@ -134,23 +147,36 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    const applyRoute = () => {
+    let cancelled = false;
+    const applyRoute = async () => {
       const { view, scriptId, profileName } = getRoute();
 
-      if (scriptId && scripts.length > 0) {
-        const script = scripts.find(s => s.id === scriptId);
-        if (script) {
-          setSelectedScript(script);
-          setCurrentView('details');
+      if (scriptId) {
+        setCurrentView('details');
+        const cached = scripts.find(s => s.id === scriptId) || detailCache.current.get(scriptId);
+        if (cached) {
+          setSelectedScript(cached);
         } else {
           setSelectedScript(null);
-          setCurrentView('notFound');
+          setDetailsLoading(true);
+          try {
+            const script = await fetchScriptById(scriptId);
+            if (cancelled) return;
+            if (script) {
+              detailCache.current.set(scriptId, script);
+              setSelectedScript(script);
+            } else setCurrentView('notFound');
+          } catch {
+            if (!cancelled) setCurrentView('notFound');
+          } finally {
+            if (!cancelled) setDetailsLoading(false);
+          }
         }
       } else if (view === 'profile' && profileName) {
         setViewProfileAuthor(profileName);
         setSelectedScript(null);
         setCurrentView('profile');
-      } else if (view === 'admin' && !isAdmin) {
+      } else if (view === 'admin' && !isAdmin && !authLoading) {
         setCurrentView('scripts');
       } else {
         setCurrentView(view);
@@ -158,12 +184,15 @@ const App: React.FC = () => {
       }
     };
 
-    applyRoute();
-    window.addEventListener('popstate', applyRoute);
-    return () => window.removeEventListener('popstate', applyRoute);
-  }, [scripts.length > 0, isAdmin]);
+    void applyRoute();
+    const onPopState = () => { void applyRoute(); };
+    window.addEventListener('popstate', onPopState);
+    return () => { cancelled = true; window.removeEventListener('popstate', onPopState); };
+  }, [scripts, isAdmin, authLoading]);
 
-  const handlePublish = async () => {
+  const handlePublish = async (script: Script) => {
+    detailCache.current.set(script.id, script);
+    setSelectedScript(current => current?.id === script.id ? script : current);
     setScriptToEdit(null);
     await refreshScripts();
   };
@@ -174,16 +203,18 @@ const App: React.FC = () => {
   };
 
   const handleScriptClick = (script: Script) => {
+    detailCache.current.set(script.id, script);
     setSelectedScript(script);
     setCurrentView('details');
     updateURL('details', script.id);
     window.scrollTo(0, 0);
   };
 
-  const handleAuthorClick = (authorName: string) => {
-    setViewProfileAuthor(authorName);
+  const handleAuthorClick = (script: Script) => {
+    const authorKey = script.author_id || script.author;
+    setViewProfileAuthor(authorKey);
     setCurrentView('profile');
-    updateURL('profile', authorName);
+    updateURL('profile', authorKey);
     window.scrollTo(0, 0);
   };
 
@@ -217,7 +248,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-zinc-200 font-sans selection:bg-white/10 selection:text-white">
+    <div className="min-h-screen overflow-x-hidden bg-black text-zinc-200 font-sans selection:bg-white/10 selection:text-white">
 
       <Header
         searchQuery={searchQuery}
@@ -231,6 +262,7 @@ const App: React.FC = () => {
       />
 
       <main className="container mx-auto px-4 py-8">
+        <Suspense fallback={<div className="flex justify-center py-24" role="status"><Loader2 className="animate-spin text-white" size={36} /><span className="sr-only">Loading page</span></div>}>
 
         {/* VIEW: SCRIPTS FEED */}
         {currentView === 'scripts' && (
@@ -238,23 +270,23 @@ const App: React.FC = () => {
 
             {/* HER0 & FEATURED VITRINE */}
             {searchQuery === '' && (
-              <div className="relative rounded-[2.5rem] overflow-hidden border border-white/5 bg-white/[0.02] backdrop-blur-3xl p-10 mb-12">
+              <div className="relative rounded-[2.5rem] overflow-hidden border border-white/5 bg-white/[0.02] backdrop-blur-3xl p-6 sm:p-10 mb-12">
                 {/* Background Glow */}
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/[0.03] rounded-full blur-[120px] pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
 
                 <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-center">
-                  <div className="w-full lg:w-1/2 space-y-6">
+                  <div className="min-w-0 w-full lg:w-1/2 space-y-6">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-medium tracking-wide">
                       <Sparkles size={14} /> NEW INFRASTRUCTURE
                     </div>
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-semibold text-white tracking-tighter leading-[1.1]">
-                      Deploy Secure <br />
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-white tracking-tighter leading-[1.1]">
+                      Explore Roblox <br />
                       <span className="text-zinc-500">
                         Scripts & Hubs
                       </span>
                     </h1>
                     <p className="text-zinc-400 text-lg max-w-md font-medium">
-                      The premier database for execution tools. High performance, keyless infrastructure, and verified releases.
+                      Browse scripts by game, find executor listings, and report links that need review.
                     </p>
                     <div className="pt-4 flex gap-4">
                       <button
@@ -265,7 +297,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="w-full lg:w-1/2">
+                  <div className="min-w-0 w-full lg:w-1/2">
                     <div className="flex items-center gap-2 mb-6">
                       <Layers className="text-zinc-400" size={20} />
                       <h2 className="text-sm font-semibold text-zinc-400 tracking-[0.2em] uppercase">Featured Vitrine</h2>
@@ -298,18 +330,48 @@ const App: React.FC = () => {
               <div className="flex items-center justify-center py-20">
                 <Loader2 size={48} className="animate-spin text-emerald-500" />
               </div>
+            ) : scriptsError ? (
+              <div role="alert" className="rounded-3xl border border-rose-500/20 bg-rose-500/5 px-8 py-12 text-center">
+                <h2 className="text-xl font-semibold text-white">Scripts could not be loaded</h2>
+                <p className="mt-2 text-zinc-400">Check your connection and try again.</p>
+                <button onClick={refreshScripts} className="mt-6 rounded-full bg-white px-6 py-3 font-semibold text-black hover:bg-zinc-200">Try again</button>
+              </div>
             ) : (
               <div id="browse-scripts">
-                <div className="flex items-center gap-3 mb-8 pb-4">
+                <div className="flex flex-wrap items-center gap-3 mb-6 pb-4">
                   <h2 className="text-2xl font-semibold text-white tracking-tight">
                     {searchQuery ? `Search Results for "${searchQuery}"` : 'Recent Uploads'}
                   </h2>
+                  <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-zinc-400">{totalCount} scripts</span>
                   <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
                 </div>
 
-                {filteredScripts.length > 0 ? (
+                <div className="mb-7 flex flex-wrap items-center gap-3" aria-label="Filter scripts">
+                  <input value={gameFilter} onChange={event => setGameFilter(event.target.value)} aria-label="Filter by game" placeholder="Filter by game"
+                    className="min-w-0 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-white/30" />
+                  <select value={accessFilter} onChange={event => setAccessFilter(event.target.value as 'all' | 'free' | 'keyed')} aria-label="Access type"
+                    className="rounded-full border border-white/10 bg-zinc-950 px-4 py-2 text-sm text-white">
+                    <option value="all">All access</option><option value="free">Keyless</option><option value="keyed">Key required</option>
+                  </select>
+                  <label className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-300">
+                    <input type="checkbox" checked={verifiedOnly} onChange={event => setVerifiedOnly(event.target.checked)} /> Verified only
+                  </label>
+                </div>
+
+                {totalCount > 0 && (
+                  <div className="mb-7 flex flex-wrap gap-2" aria-label="Sort scripts">
+                    {([['recent', 'Newest'], ['popular', 'Most viewed'], ['official', 'Official first']] as const).map(([value, label]) => (
+                      <button key={value} type="button" aria-pressed={sortBy === value} onClick={() => setSortBy(value)}
+                        className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${sortBy === value ? 'border-white bg-white text-black' : 'border-white/10 bg-white/[0.03] text-zinc-400 hover:border-white/30 hover:text-white'}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {scripts.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredScripts.map((script) => (
+                    {scripts.map((script) => (
                       <ScriptCard
                         key={script.id}
                         script={script}
@@ -321,12 +383,19 @@ const App: React.FC = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-20 text-slate-500 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
                     <Layers size={48} className="mb-4 opacity-50 text-indigo-400" />
-                    <p className="text-lg font-medium text-slate-400">No scripts found matching "{searchQuery}"</p>
+                    <p className="text-lg font-medium text-slate-400">No scripts match these filters.</p>
                     <button
-                      onClick={() => setSearchQuery('')}
+                      onClick={() => { setSearchQuery(''); setGameFilter(''); setAccessFilter('all'); setVerifiedOnly(false); }}
                       className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors"
                     >
-                      Clear Search Flags
+                      Clear filters
+                    </button>
+                  </div>
+                )}
+                {hasMore && (
+                  <div className="mt-10 flex justify-center">
+                    <button type="button" onClick={loadMore} disabled={loadingMore} className="rounded-full border border-white/15 bg-white/5 px-8 py-3 font-semibold text-white hover:bg-white/10 disabled:opacity-50">
+                      {loadingMore ? 'Loading...' : 'Show more scripts'}
                     </button>
                   </div>
                 )}
@@ -337,14 +406,14 @@ const App: React.FC = () => {
 
         {/* VIEW: EXECUTORS */}
         {currentView === 'executors' && (
-          <ExecutorsView executors={executors} loading={loading} />
+          <ExecutorsView executors={executors} loading={executorsLoading} onLoginRequested={() => setIsAuthModalOpen(true)} />
         )}
 
         {/* VIEW: ADMIN DASHBOARD */}
         {currentView === 'admin' && isAdmin && (
           <AdminDashboard
-            scripts={scripts}
-            setScripts={setScripts}
+            scripts={adminScripts}
+            setScripts={setAdminScripts}
             executors={executors}
             setExecutors={setExecutors}
             onEditScript={handleEditScript}
@@ -360,7 +429,11 @@ const App: React.FC = () => {
             isAdmin={isAdmin}
             user={user}
             onEdit={handleEditScript}
+            onLoginRequested={() => setIsAuthModalOpen(true)}
           />
+        )}
+        {currentView === 'details' && !selectedScript && detailsLoading && (
+          <div className="flex justify-center py-24" role="status"><Loader2 className="animate-spin" size={36} /><span className="sr-only">Loading script</span></div>
         )}
 
         {/* VIEW: PUBLIC PROFILE */}
@@ -401,6 +474,7 @@ const App: React.FC = () => {
           <SlenderHubView />
         )}
 
+        </Suspense>
       </main>
 
       {/* Footer */}

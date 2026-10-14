@@ -3,11 +3,12 @@ import { X, UploadCloud, Link as LinkIcon, Youtube, MessageCircle, Globe, Plus, 
 import { Script, Task, TaskType } from '../types';
 import { supabase } from '../lib/supabase';
 import { isSafeExternalUrl } from '../utils/url';
+import { mapScript } from '../utils/mapScript';
 
 interface PublishModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onPublish: (script: Script) => void;
+  onPublish: (script: Script) => Promise<void>;
   isAdmin?: boolean;
   scriptToEdit?: Script | null;
 }
@@ -15,7 +16,10 @@ interface PublishModalProps {
 const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish, isAdmin = false, scriptToEdit = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [currentUserEmail, setCurrentUserEmail] = useState('Guest');
+  const [step, setStep] = useState(0);
+  const [formError, setFormError] = useState('');
+  const [saveState, setSaveState] = useState('');
+  const [publishedId, setPublishedId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -32,6 +36,13 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!imageFile) return;
+    const url = URL.createObjectURL(imageFile);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
+
   // Task Builder State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeTaskType, setActiveTaskType] = useState<TaskType | null>(null);
@@ -40,6 +51,10 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
   // Fetch current user on open or handle edit data
   useEffect(() => {
     if (isOpen) {
+      setStep(0);
+      setFormError('');
+      setSaveState('');
+      setPublishedId(null);
       if (scriptToEdit) {
         setFormData({
           title: scriptToEdit.title,
@@ -70,8 +85,16 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
       supabase.auth.getUser().then(({ data }) => {
         if (data.user) {
           setCurrentUser(data.user);
-          if (data.user.email) {
-            setCurrentUserEmail(data.user.email.split('@')[0]);
+          if (!scriptToEdit) {
+            try {
+              const draft = localStorage.getItem(`script-draft:${data.user.id}`);
+              if (draft) {
+                const parsed = JSON.parse(draft);
+                if (parsed.formData) setFormData(parsed.formData);
+                if (Array.isArray(parsed.tasks)) setTasks(parsed.tasks);
+                setSaveState('Draft restored. Choose a thumbnail again before publishing.');
+              }
+            } catch { /* Ignore damaged local drafts. */ }
           }
         }
       });
@@ -89,15 +112,20 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+        setFormError('Choose an image smaller than 5 MB.');
+        e.target.value = '';
+        return;
+      }
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setFormError('');
     }
   };
 
   const handleAddTask = () => {
     if (!activeTaskType || !tempTaskUrl) return;
     if (!isSafeExternalUrl(tempTaskUrl)) {
-      alert('Task URLs must use HTTPS.');
+      setFormError('Task URLs must use HTTPS.');
       return;
     }
 
@@ -125,27 +153,42 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
     setTasks(tasks.filter(t => t.id !== id));
   };
 
+  const validateStep = (currentStep: number) => {
+    if (currentStep === 0) {
+      if (!formData.title.trim() || !formData.gameName.trim()) return 'Add a title and game name.';
+    }
+    if (currentStep === 1) {
+      if (!imageFile && !scriptToEdit) return 'Choose a thumbnail image.';
+      if (!formData.rawLink && !formData.shortenerLink) return 'Add a source URL or monetization link.';
+      if ((formData.rawLink && !isSafeExternalUrl(formData.rawLink)) || (formData.shortenerLink && !isSafeExternalUrl(formData.shortenerLink))) return 'Script URLs must use HTTPS.';
+    }
+    return '';
+  };
+
+  const nextStep = () => {
+    const error = validateStep(step);
+    if (error) return setFormError(error);
+    setFormError('');
+    setStep(previous => Math.min(previous + 1, 2));
+  };
+
+  const saveDraft = () => {
+    if (!currentUser?.id) return setFormError('Sign in to save a draft.');
+    localStorage.setItem(`script-draft:${currentUser.id}`, JSON.stringify({ formData, tasks }));
+    setSaveState('Draft saved on this device. Image files are not saved.');
+    setFormError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation: Require Image if NOT editing
-    if (!imageFile && !scriptToEdit) {
-      alert("Please select a thumbnail image.");
-      return;
-    }
-
-    // Validation: Require either Raw Link OR Shortener Link
-    if (!formData.rawLink && !formData.shortenerLink) {
-      alert("You must provide either a 'Raw Script URL' (for direct code) OR a 'Monetization Link' (for external download).");
-      return;
-    }
-    if ((formData.rawLink && !isSafeExternalUrl(formData.rawLink)) || (formData.shortenerLink && !isSafeExternalUrl(formData.shortenerLink))) {
-      alert('Script URLs must use HTTPS.');
-      return;
-    }
+    const validationError = validateStep(0) || validateStep(1);
+    if (validationError) { setFormError(validationError); return; }
 
     setIsSubmitting(true);
+    setSaveState(imageFile ? 'Uploading thumbnail...' : 'Saving script...');
 
+    let uploadedPath: string | null = null;
     try {
       let publicUrl = scriptToEdit?.imageUrl || '';
 
@@ -161,24 +204,22 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
           .upload(filePath, imageFile);
 
         if (uploadError) throw uploadError;
+        uploadedPath = filePath;
 
         const { data: { publicUrl: newUrl } } = supabase.storage
           .from('images')
           .getPublicUrl(filePath);
 
         publicUrl = newUrl;
+        setSaveState('Saving script and tasks...');
       }
 
-      // 2. Insert or Update Script
-      let scriptData, scriptError;
-
-      const payload: any = {
+      // Save the script and its tasks in one database transaction.
+      const payload = {
         title: formData.title,
         game_name: formData.gameName,
         description: formData.description,
         image_url: publicUrl,
-        author: scriptToEdit ? scriptToEdit.author : currentUserEmail,
-        author_id: scriptToEdit ? scriptToEdit.author_id : (currentUser?.id || null),
         raw_link: formData.rawLink || null,
         shortener_link: formData.shortenerLink || null,
         verified: scriptToEdit ? scriptToEdit.verified : (isAdmin ? true : false),
@@ -186,78 +227,23 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
         key_system: formData.keySystem
       };
 
-      if (scriptToEdit) {
-        const { data, error } = await supabase
-          .from('scripts')
-          .update(payload)
-          .eq('id', scriptToEdit.id)
-          .select()
-          .single();
-        scriptData = data;
-        scriptError = error;
-      } else {
-        const { data, error } = await supabase
-          .from('scripts')
-          .insert([payload])
-          .select()
-          .single();
-        scriptData = data;
-        scriptError = error;
-      }
-
-      if (scriptError) throw scriptError;
-
-      // 3. Handle Tasks (Delete and Re-insert if editing)
-      if (scriptToEdit) {
-        const { error: deleteError } = await supabase
-          .from('tasks')
-          .delete()
-          .eq('script_id', scriptToEdit.id);
-        if (deleteError) throw deleteError;
-      }
-
-      // 3. Insert Tasks if any
-      if (tasks.length > 0 && scriptData) {
-        const tasksPayload = tasks.map(t => ({
-          script_id: scriptData.id,
-          type: t.type,
-          url: t.url,
-          text: t.text
-        }));
-
-        const { error: tasksError } = await supabase
-          .from('tasks')
-          .insert(tasksPayload);
-
-        if (tasksError) throw tasksError;
-      }
-
-      // 4. Update UI
-      if (scriptData) {
-        const newScript: Script = {
-          id: scriptData.id,
-          title: scriptData.title,
-          gameName: scriptData.game_name,
-          description: scriptData.description,
-          imageUrl: scriptData.image_url,
-          author: scriptData.author,
-          views: scriptData.views || 0,
-          rawLink: scriptData.raw_link,
-          shortenerLink: scriptData.shortener_link,
-          tasks: tasks,
-          createdAt: Date.now(),
-          verified: isAdmin || (scriptToEdit ? scriptToEdit.verified : false),
-          isOfficial: isAdmin && formData.isOfficial,
-          keySystem: formData.keySystem
-        };
-        onPublish(newScript);
-      }
-
-      onClose();
+      const { data: scriptData, error: saveError } = await supabase.rpc('save_script', {
+        p_script_id: scriptToEdit?.id ?? null,
+        p_payload: payload,
+        p_tasks: tasks.map(({ type, url, text }) => ({ type, url, text }))
+      });
+      if (saveError) throw saveError;
+      uploadedPath = null;
+      await onPublish(mapScript({ ...scriptData, tasks }));
+      if (currentUser?.id && !scriptToEdit) localStorage.removeItem(`script-draft:${currentUser.id}`);
+      setPublishedId(scriptData.id);
+      setSaveState('Published successfully.');
 
     } catch (error: any) {
+      if (uploadedPath) await supabase.storage.from('images').remove([uploadedPath]);
       console.error('Error publishing:', error);
-      alert(`Failed to publish: ${error.message}`);
+      setFormError(`Failed to publish: ${error.message}`);
+      setSaveState('');
     } finally {
       setIsSubmitting(false);
     }
@@ -304,7 +290,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
               <h2 className="text-2xl font-semibold text-white tracking-tight">
                 {scriptToEdit ? 'Module Configuration' : 'Script Deployment'}
               </h2>
-              <p className="text-sm text-zinc-500 font-medium tracking-wide">System Protocol v2.4</p>
+              <p className="text-sm text-zinc-500 font-medium tracking-wide">{publishedId ? 'Ready to share' : `Step ${step + 1} of 3`}</p>
             </div>
           </div>
           <button
@@ -315,12 +301,17 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
           </button>
         </div>
 
+        {!publishedId && <div className="flex gap-2 px-8 pt-5" aria-label="Publishing steps">{['Details', 'Links & image', 'Preview'].map((label, index) => <div key={label} className={`flex-1 rounded-lg px-3 py-2 text-center text-xs font-semibold ${step === index ? 'bg-white text-black' : 'bg-white/5 text-zinc-400'}`}>{label}</div>)}</div>}
+
         {/* Content */}
         <div className="overflow-y-auto p-8 md:p-10 flex-1 relative z-10 custom-scrollbar">
-          <form id="publish-form" onSubmit={handleSubmit} className="flex flex-col lg:grid lg:grid-cols-2 gap-12">
+          {publishedId ? <div className="mx-auto max-w-lg space-y-5 text-center py-10"><CheckCircle2 size={52} className="mx-auto text-emerald-400" /><h3 className="text-2xl font-semibold text-white">Script published</h3><p className="text-zinc-400">Your script is available at its public page.</p><a href={`/script/${encodeURIComponent(publishedId)}`} className="inline-flex rounded-xl bg-white px-6 py-3 font-semibold text-black">View script</a><div><button type="button" onClick={() => navigator.clipboard.writeText(new URL(`/script/${encodeURIComponent(publishedId)}`, window.location.origin).toString()).then(() => setSaveState('Link copied.')).catch(() => setFormError('Could not copy the link.'))} className="text-sm text-zinc-300 underline">Copy link</button></div>{saveState && <p role="status" className="text-sm text-zinc-400">{saveState}</p>}{formError && <p role="alert" className="text-sm text-rose-400">{formError}</p>}</div> : <form id="publish-form" onSubmit={handleSubmit} className="space-y-8">
+
+            {formError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">{formError}</p>}
+            {saveState && <p role="status" className="text-sm text-zinc-400">{saveState}</p>}
 
             {/* Step 1: Core Configuration */}
-            <div className="space-y-8">
+            <div className={step === 0 ? 'space-y-8 max-w-2xl' : 'hidden'}>
               <div className="flex items-center gap-4 mb-2">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 border border-white/5 text-xs font-semibold text-white shadow-inner">01</div>
                 <h3 className="text-sm font-semibold text-white tracking-wide">Base Identity</h3>
@@ -382,7 +373,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
             </div>
 
             {/* Step 2: Content & Visuals */}
-            <div className="space-y-10">
+            <div className={step === 1 ? 'space-y-10 max-w-2xl' : 'hidden'}>
               {/* Image Upload */}
               <div className="space-y-4">
                 <div className="flex items-center gap-4 mb-2">
@@ -395,7 +386,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="hidden"
+                    className="sr-only"
                     id="script-image-upload"
                   />
                   <label
@@ -508,7 +499,7 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
                       value={formData.rawLink}
                       onChange={handleChange}
                       className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white font-medium text-sm focus:border-white/30 focus:outline-none transition-all placeholder:text-zinc-600"
-                      placeholder="loadstring(game:HttpGet('...'))()"
+                      placeholder="https://example.com/script.lua"
                     />
                   </div>
 
@@ -528,42 +519,47 @@ const PublishModal: React.FC<PublishModalProps> = ({ isOpen, onClose, onPublish,
               </div>
             </div>
 
-          </form>
+            {step === 2 && <div className="max-w-2xl space-y-5"><h3 className="text-xl font-semibold text-white">Review before publishing</h3><div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">{imagePreview && <img src={imagePreview} alt="Selected thumbnail" className="h-48 w-full object-cover" />}<div className="space-y-3 p-5"><h4 className="text-xl font-bold text-white">{formData.title}</h4><p className="text-sm text-zinc-400">{formData.gameName}</p><p className="whitespace-pre-wrap text-sm text-zinc-300">{formData.description || 'No description.'}</p><p className="text-xs text-zinc-500">{tasks.length} unlock tasks · {formData.rawLink ? 'Source URL' : 'Monetization link'} · {formData.keySystem ? 'Key required' : 'No key required'}</p></div></div><p className="text-xs text-zinc-500">External links are provided by the publisher. Review them before opening.</p></div>}
+
+          </form>}
         </div>
 
         {/* Footer */}
         <div className="px-10 py-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 bg-white/[0.02] relative z-10">
           <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium items-center order-2 sm:order-1">
             <div className="w-2 h-2 rounded-full bg-white"></div>
-            Direct Deployment Secure
+            {publishedId ? 'Published' : 'Review all details before publishing'}
           </div>
 
-          <div className="flex items-center gap-4 w-full sm:w-auto order-1 sm:order-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto order-1 sm:order-2">
             <button
               type="button"
               onClick={onClose}
               className="px-6 py-3 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
             >
-              Abort
+              {publishedId ? 'Close' : 'Cancel'}
             </button>
-            <button
+            {!publishedId && !scriptToEdit && <button type="button" onClick={saveDraft} className="px-4 py-3 text-sm text-zinc-300 hover:text-white">Save draft</button>}
+            {step > 0 && !publishedId && <button type="button" onClick={() => { setStep(previous => previous - 1); setFormError(''); }} className="px-4 py-3 text-sm text-zinc-300 hover:text-white">Back</button>}
+            {!publishedId && <button
               disabled={isSubmitting}
-              type="submit"
-              form="publish-form"
+              type={step === 2 ? 'submit' : 'button'}
+              form={step === 2 ? 'publish-form' : undefined}
+              onClick={step === 2 ? undefined : nextStep}
               className="flex-1 sm:flex-none px-8 py-3 bg-white hover:bg-zinc-200 text-black font-semibold rounded-full shadow-lg transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="animate-spin" size={18} />
-                  Initializing
+                  {saveState || 'Publishing...'}
                 </>
               ) : (
                 <>
-                  {scriptToEdit ? 'Sync Changes' : 'Deploy Script'}
+                  {step === 2 ? (scriptToEdit ? 'Save changes' : 'Publish script') : 'Next'}
                   <ArrowRight size={18} strokeWidth={2.5} />
                 </>
               )}
-            </button>
+            </button>}
           </div>
         </div>
 

@@ -5,7 +5,7 @@ import { Script } from '../types';
 interface ScriptCardProps {
   script: Script;
   onClick: (script: Script) => void;
-  onAuthorClick?: (authorName: string) => void;
+  onAuthorClick?: (script: Script) => void;
 }
 
 const ScriptCard: React.FC<ScriptCardProps> = ({ script, onClick, onAuthorClick }) => {
@@ -13,13 +13,22 @@ const ScriptCard: React.FC<ScriptCardProps> = ({ script, onClick, onAuthorClick 
   const handleAuthorClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onAuthorClick) {
-      onAuthorClick(script.author);
+      onAuthorClick(script);
     }
   };
 
   return (
     <div
       onClick={() => onClick(script)}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onClick(script);
+        }
+      }}
+      role="link"
+      tabIndex={0}
+      aria-label={`Open ${script.title}`}
       className="group cursor-pointer relative flex flex-col bg-white/[0.02] backdrop-blur-md border border-white/5 hover:bg-white/[0.04] hover:border-white/20 transition-all duration-300 h-full overflow-hidden rounded-[2rem] shadow-lg hover:-translate-y-1"
     >
       {/* Visual Header / Thumbnail */}
@@ -29,9 +38,13 @@ const ScriptCard: React.FC<ScriptCardProps> = ({ script, onClick, onAuthorClick 
         <img
           src={script.imageUrl}
           alt={script.title}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-1000"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${script.id}/400/200`;
+            const image = e.target as HTMLImageElement;
+            image.onerror = null;
+            image.src = '/slender-logo.png';
           }}
         />
 

@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import EditExecutorModal from './EditExecutorModal';
 import { useSupportedGames } from '../hooks/useSupportedGames';
 import { isSafeExternalUrl } from '../utils/url';
+import AdminReports from './AdminReports';
 
 interface AdminDashboardProps {
   scripts: Script[];
@@ -20,7 +21,7 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   scripts, setScripts, executors, setExecutors, onEditScript
 }) => {
-  const [activeTab, setActiveTab] = useState<'scripts' | 'executors' | 'users' | 'games'>('scripts');
+  const [activeTab, setActiveTab] = useState<'scripts' | 'executors' | 'users' | 'games' | 'reports'>('scripts');
   const [showAddExecutor, setShowAddExecutor] = useState(false);
   const [executorToEdit, setExecutorToEdit] = useState<Executor | null>(null);
 
@@ -93,14 +94,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!script) return;
 
     const newStatus = !script.verified;
+    const checkedAt = newStatus ? new Date().toISOString() : null;
     const { error } = await supabase
       .from('scripts')
-      .update({ verified: newStatus })
+      .update({ verified: newStatus, last_verified_at: checkedAt })
       .eq('id', id);
 
     if (!error) {
       setScripts(prev => prev.map(s =>
-        s.id === id ? { ...s, verified: newStatus } : s
+        s.id === id ? { ...s, verified: newStatus, lastVerifiedAt: checkedAt ? Date.parse(checkedAt) : undefined } : s
       ));
     } else {
       console.error("Failed to verify", error);
@@ -308,7 +310,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           {/* Tab Controls - Premium Switcher */}
-          <div className="flex bg-slate-900/40 border border-white/[0.05] p-1.5 rounded-2xl backdrop-blur-xl shadow-2xl">
+          <div className="flex max-w-full overflow-x-auto bg-slate-900/40 border border-white/[0.05] p-1.5 rounded-2xl backdrop-blur-xl shadow-2xl">
+            <button onClick={() => setActiveTab('reports')} className={`flex shrink-0 items-center gap-2 px-4 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl ${activeTab === 'reports' ? 'bg-rose-500/10 text-rose-400' : 'text-slate-500 hover:text-slate-300'}`}><AlertTriangle size={14} /> Reports</button>
             <button
               onClick={() => setActiveTab('scripts')}
               className={`flex items-center gap-3 px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all duration-500 rounded-xl ${activeTab === 'scripts' ? 'bg-rose-500/10 text-rose-400 shadow-lg shadow-rose-500/10' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
@@ -344,6 +347,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {activeTab === 'reports' && <AdminReports scripts={scripts} executors={executors} setScripts={setScripts} setExecutors={setExecutors} />}
 
       {/* --- SCRIPTS TAB --- */}
       {activeTab === 'scripts' && (

@@ -1,4 +1,4 @@
--- Run this migration in the Supabase SQL editor before deploying the client changes.
+-- Apply this migration before reliable_script_publishing.
 -- Ensure the intended owner already exists in public.admin_users with role = 'Owner'.
 
 create or replace function public.is_admin()
