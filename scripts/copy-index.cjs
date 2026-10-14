@@ -56,6 +56,11 @@ async function generatePages() {
   }
   fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(url => `<url><loc>${escapeHtml(siteUrl + url)}</loc></url>`).join('')}</urlset>`);
   fs.writeFileSync(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${siteUrl}/sitemap.xml\n`);
+  const redirectsFile = path.join(dist, '_redirects');
+  const fallbackRedirects = fs.existsSync(redirectsFile) ? fs.readFileSync(redirectsFile, 'utf8') : '/* /index.html 200\n';
+  const scriptRedirects = scripts.filter(script => /^[0-9a-f-]{36}$/i.test(script.id))
+    .flatMap(script => [`/script/${script.id} /script/${script.id}/index.html 200!`, `/script/${script.id}/ /script/${script.id}/index.html 200!`]);
+  fs.writeFileSync(redirectsFile, `${scriptRedirects.join('\n')}\n${fallbackRedirects}`);
   console.log(`Generated ${scripts.length} script pages and sitemap.xml`);
 }
 
