@@ -31,6 +31,24 @@ async function generatePages() {
     scripts = await response.json();
   }
   const urls = ['/', '/executors', '/about', '/privacy', '/slenderhub'];
+  const staticPages = [
+    { path: '/executors', title: 'Executors - Script Hub', description: 'Browse executor listings on Script Hub.' },
+    { path: '/about', title: 'About - Script Hub', description: 'Learn about the Script Hub platform and community.' },
+    { path: '/privacy', title: 'Privacy Policy - Script Hub', description: 'Read how Script Hub handles account information, browser storage, and advertising.' },
+    { path: '/slenderhub', title: 'SlenderHub - Script Hub', description: 'Explore the SlenderHub collection on Script Hub.' },
+  ];
+  for (const staticPage of staticPages) {
+    const pageUrl = `${siteUrl}${staticPage.path}`;
+    let page = template.replace(/<title>[^<]*<\/title>/, `<title>${escapeHtml(staticPage.title)}</title>`);
+    page = replaceTag(page, /(<meta name="description" content=")[^"]*("\s*\/>)/, staticPage.description);
+    page = replaceTag(page, /(<link rel="canonical" href=")[^"]*("\s*\/>)/, pageUrl);
+    page = replaceTag(page, /(<meta property="og:url" content=")[^"]*("\s*\/>)/, pageUrl);
+    page = replaceTag(page, /(<meta property="og:title" content=")[^"]*("\s*\/>)/, staticPage.title);
+    page = replaceTag(page, /(<meta property="og:description" content=")[^"]*("\s*\/>)/, staticPage.description);
+    const directory = path.join(dist, staticPage.path.slice(1));
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(path.join(directory, 'index.html'), page);
+  }
   for (const script of scripts) {
     if (!/^[0-9a-f-]{36}$/i.test(script.id)) continue;
     const scriptPath = `/script/${script.id}`;
