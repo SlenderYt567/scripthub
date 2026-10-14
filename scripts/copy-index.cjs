@@ -49,6 +49,9 @@ async function generatePages() {
     const directory = path.join(dist, 'script');
     fs.mkdirSync(directory, { recursive: true });
     fs.writeFileSync(path.join(directory, `${script.id}.html`), page);
+    const directoryRoute = path.join(directory, script.id);
+    fs.mkdirSync(directoryRoute, { recursive: true });
+    fs.writeFileSync(path.join(directoryRoute, 'index.html'), page);
     urls.push(scriptPath);
   }
   fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(url => `<url><loc>${escapeHtml(siteUrl + url)}</loc></url>`).join('')}</urlset>`);
